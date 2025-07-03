@@ -1,0 +1,20 @@
+# virtual environment
+venv/
+
+# Python temporary files
+__pycache__/
+*.py[cod]
+*.sqlite3
+
+# editor configuration files
+*.vscode/
+*.idea/
+
+# Logs
+*.log
+
+# migrations
+*.pyc
+
+# environment files
+.env
