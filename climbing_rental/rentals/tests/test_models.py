@@ -1,6 +1,6 @@
 import pytest
 from django.contrib.auth.models import User
-from rentals.models import Category, Equipment, Rental
+from rentals.models import Category, Equipment, Rental, RentalItem
 
 
 
@@ -49,3 +49,30 @@ def test_create_rental():
     assert rental.end_date == '2025-06-06'
     assert rental.status == 'pending'
     assert rental.created_at is not None
+
+
+
+@pytest.mark.django_db
+def test_create_rental_item():
+    category = Category.objects.create(name="Liny")
+    equipment = Equipment.objects.create(
+        name = "Lina Beal",
+        category = category,
+        quantity = 5,
+        price_per_day = 6.00,
+        deposit = 100.00
+    )
+    user = User.objects.create_user(username = "testuser", password = "testpass")
+    rental = Rental.objects.create(
+        user = user,
+        start_date = '2025-06-01',
+        end_date = '2025-06-06',
+    )
+    item = RentalItem.objects.create(
+        rental = rental,
+        equipment = equipment,
+        quantity = 1,
+    )
+    assert item.rental == rental
+    assert item.equipment == equipment
+    assert item.quantity == 1

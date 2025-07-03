@@ -38,3 +38,16 @@ class Rental(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.start_date} - {self.end_date}"
+
+
+
+class RentalItem(models.Model):
+    rental = models.ForeignKey(Rental, on_delete=models.CASCADE, related_name='items')
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.equipment.name} x {self.quantity}"
+
+
+
