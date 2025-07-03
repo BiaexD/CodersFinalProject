@@ -1,5 +1,5 @@
 from django.db import models
-
+from django.conf import settings
 
 
 class Category(models.Model):
@@ -21,3 +21,20 @@ class Equipment(models.Model):
 
     def __str__(self):
         return self.name
+
+
+
+class Rental(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Oczekujace'),
+        ('active', 'Aktywne'),
+        ('finished', 'Zakonczone'),
+    ]
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+
+    def __str__(self):
+        return f"{self.user.username} - {self.start_date} - {self.end_date}"
