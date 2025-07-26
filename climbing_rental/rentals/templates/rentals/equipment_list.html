@@ -28,7 +28,11 @@
 
         <!--w kazdym wierszu wstawiamy dane konkretnego sprzetu-->
         <tr>
-            <td>{{ item.name }}</td>
+            <td>
+                <a href="{% url 'equipment_detail' item.pk %}">
+                    {{ item.name }}
+                </a>
+            </td>
             <td>{{ item.category.name }}</td>
             <td>{{ item.description }}</td>
             <td>{{ item.quantity }}</td>

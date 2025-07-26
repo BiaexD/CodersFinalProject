@@ -35,3 +35,23 @@ def test_equipment_list_view(client):
     response = client.get(url)
     assert response.status_code == 200
     assert "Lina Beal" in response.content.decode()
+
+
+
+@pytest.mark.django_db
+def test_equipment_detail_view(client):
+    category = Category.objects.create(name="Kaski")
+    equipment = Equipment.objects.create(
+        name="Kask",
+        category=category,
+        description="Kask Petzl",
+        quantity=10,
+        price_per_day=5.00,
+        deposit=50.00,
+    )
+    url = reverse("equipment_detail", args=[equipment.pk])
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "Kask Petzl" in response.content.decode()
+
+

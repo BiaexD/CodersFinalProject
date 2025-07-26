@@ -28,4 +28,5 @@ Nazwa: equipment_list (mozna uzywac ja w linkach)
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('equipment/', views.equipment_list, name='equipment_list'),
+    path('equipment/<int:pk>/', views.equipment_detail, name='equipment_detail'),
 ]
