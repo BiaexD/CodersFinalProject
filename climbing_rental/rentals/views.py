@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404  #funkcja render laczy dane z szablonem HTML oraz zwraca odpowiedz HTTP
                                                         #funkcja get_object_or_404 - bezpiecznie pobiera objekt z bazy, zwroci 404 jezeli nie znajdzie
-from .models import Equipment
+from .models import Equipment, Category
 
 
 """
@@ -35,3 +35,18 @@ return render:
 def equipment_detail(request, pk):
     equipment = get_object_or_404(Equipment, pk=pk)
     return render(request, 'rentals/equipment_detail.html', {'equipment': equipment})
+
+
+
+def home(request):
+    categories = Category.objects.all()
+    return render(request, 'home.html', {'categories': categories})
+
+
+def category_detail(request, category_id):
+    category = get_object_or_404(Category, pk=category_id)
+    equipment_list = Equipment.objects.filter(category=category)
+    return render(request, 'rentals/category_detail.html', {
+        'category': category,
+        'equipment_list': equipment_list,
+    })

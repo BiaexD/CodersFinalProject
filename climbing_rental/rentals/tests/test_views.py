@@ -1,6 +1,9 @@
+from importlib.resources import contents
+
 import pytest
 from django.urls import reverse
 from rentals.models import Category, Equipment
+from django.contrib.auth.models import User
 
 
 """
@@ -14,7 +17,7 @@ Equipment.objects.create(...) - tworzymy sprzet, dzieki temu widok ma co wyswiet
 
 url - pobieramy sciezke /equipment/
 
-seponse - wysylamy symulowane zadanie GET
+response - wysylamy symulowane zadanie GET
 
 assert response 200 - sprawdzamy czy serwer zwrocil OK
 
@@ -55,3 +58,41 @@ def test_equipment_detail_view(client):
     assert "Kask Petzl" in response.content.decode()
 
 
+
+@pytest.mark.django_db
+def test_category_detail_view(client):
+    category1 = Category.objects.create(name="Zima")
+    category2 = Category.objects.create(name="Skaly")
+    Equipment.objects.create(
+        name="Raki koszykowe",
+        category=category1,
+        description="Raki koszykowe firmy Climbing Technology",
+        quantity=10,
+        price_per_day=10.00,
+        deposit=150.00,
+    )
+    Equipment.objects.create(
+        name="Ekspres",
+        category=category2,
+        description="Ekspres 15cm firmy Simond",
+        quantity=100,
+        price_per_day=2.00,
+        deposit=30.00,
+    )
+    url1 = reverse('category_detail', args=[category1.pk])
+    response1 = client.get(url1)
+
+    assert response1.status_code ==200
+
+    content1 = response1.content.decode()
+    assert "Raki koszykowe" in content1
+    assert "Ekspres" not in content1
+
+    url2 = reverse('category_detail', args=[category2.pk])
+    response2 = client.get(url2)
+
+    assert response2.status_code ==200
+
+    content2 = response2.content.decode()
+    assert "Raki koszykowe" not in content2
+    assert "Ekspres" in content2

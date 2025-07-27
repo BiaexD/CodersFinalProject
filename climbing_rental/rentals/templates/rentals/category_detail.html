@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ category.name }}</title>
+</head>
+<body>
+    <h1>Sprzęt w kategorii: {{ category.name }}</h1>
+    <ul>
+      <!-- 🔹 pętla for: dla każdego sprzętu (item) z equipment_list
+              – pokaż nazwę, cenę za dobę i kaucję
+               – jeśli lista jest pusta: pokaż komunikat „Brak sprzętu…” -->
+        {% for item in equipment_list %}
+            <li>
+                <strong>{{ item.name }}</strong> – {{ item.price_per_day }} zł/doba, kaucja: {{ item.deposit }} zł
+            </li>
+        {% empty %}
+            <li>Brak sprzętu w tej kategorii.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'home' %}">← Powrót do strony głównej</a>
+</body>
+</html>
