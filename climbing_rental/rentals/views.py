@@ -43,6 +43,7 @@ def home(request):
     return render(request, 'home.html', {'categories': categories})
 
 
+
 def category_detail(request, category_id):
     category = get_object_or_404(Category, pk=category_id)
     equipment_list = Equipment.objects.filter(category=category)
@@ -50,3 +51,34 @@ def category_detail(request, category_id):
         'category': category,
         'equipment_list': equipment_list,
     })
+
+
+
+def cart_view(request):
+    cart = request.session.get('cart', {})
+    items = []
+    total_price_per_day = 0
+    total_deposit = 0
+
+    for equipment_id, quantity in cart.items():
+        try:
+            equipment = Equipment.objects.get(pk=equipment_id)
+            price = equipment.price_per_day * quantity
+            deposit = equipment.deposit * quantity
+            total_price_per_day += price
+            total_deposit += deposit
+            items.append({
+                'equipment': equipment,
+                'quantity': quantity,
+                'price': price,
+                'deposit': deposit,
+            })
+        except Equipment.DoesNotExist:
+            continue
+
+    context = {
+        'items': items,
+        'total_price_per_day': total_price_per_day,
+        'total_deposit': total_deposit,
+    }
+    return render(request, 'cart.html', context)

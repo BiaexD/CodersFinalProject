@@ -3,6 +3,7 @@ from importlib.resources import contents
 import pytest
 from django.urls import reverse
 from rentals.models import Category, Equipment
+from django.shortcuts import render
 from django.contrib.auth.models import User
 
 
@@ -69,7 +70,7 @@ def test_category_detail_view(client):
         description="Raki koszykowe firmy Climbing Technology",
         quantity=10,
         price_per_day=10.00,
-        deposit=150.00,
+        deposit=100.00,
     )
     Equipment.objects.create(
         name="Ekspres",
@@ -81,7 +82,6 @@ def test_category_detail_view(client):
     )
     url1 = reverse('category_detail', args=[category1.pk])
     response1 = client.get(url1)
-
     assert response1.status_code ==200
 
     content1 = response1.content.decode()
@@ -90,7 +90,6 @@ def test_category_detail_view(client):
 
     url2 = reverse('category_detail', args=[category2.pk])
     response2 = client.get(url2)
-
     assert response2.status_code ==200
 
     content2 = response2.content.decode()
@@ -104,9 +103,11 @@ def test_home_view(client):
     Category.objects.create(name="Zima")
     Category.objects.create(name="Skaly")
     Category.objects.create(name="Via ferrata")
+
     url = reverse('home')
     response = client.get(url)
     assert response.status_code == 200
+
     content = response.content.decode()
     assert "Zima" in content
     assert "Skaly" in content
@@ -114,3 +115,27 @@ def test_home_view(client):
 
 
 
+@pytest.mark.django_db
+def test_cart_view(client):
+    category = Category.objects.create(name="Zima")
+    equipment = Equipment.objects.create(
+        name="Raki koszykowe",
+        category=category,
+        description="Raki koszykowe firmy Climbing Technology",
+        quantity=10,
+        price_per_day=10.00,
+        deposit=100.00,
+    )
+    session = client.session
+    session['cart'] = {str(equipment.pk): 2}
+    session.save()
+
+    url = reverse('cart')
+    response = client.get(url)
+    assert response.status_code == 200
+
+    content = response.content.decode()
+    assert "Raki koszykowe" in content
+    assert "2" in content
+    assert "20.00" in content
+    assert "200.00" in content

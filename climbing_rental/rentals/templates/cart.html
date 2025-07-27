@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Koszyk</title>
+</head>
+<body>
+    <h1>Twój koszyk</h1>
+
+    {% if items %}
+        <table border="1">
+            <tr>
+                <th>Nazwa</th>
+                <th>Ilość</th>
+                <th>Cena za dzień</th>
+                <th>Kaucja</th>
+            </tr>
+            {% for item in items %}
+                <tr>
+                    <td>{{ item.equipment.name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.price }} zł</td>
+                    <td>{{ item.deposit }} zł</td>
+                </tr>
+            {% endfor %}
+        </table>
+        <p><strong>Razem do zapłaty za dzień:</strong> {{ total_price_per_day }} zł</p>
+        <p><strong>Razem kaucji:</strong> {{ total_deposit }} zł</p>
+    {% else %}
+        <p>Koszyk jest pusty.</p>
+    {% endif %}
+
+    <p><a href="/">← Powrót do strony głównej</a></p>
+</body>
+</html>
