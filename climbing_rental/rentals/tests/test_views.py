@@ -139,3 +139,24 @@ def test_cart_view(client):
     assert "2" in content
     assert "20.00" in content
     assert "200.00" in content
+
+
+
+@pytest.mark.django_db
+def test_add_to_cart_view(client):
+    category = Category.objects.create(name="Skaly")
+    equipment = Equipment.objects.create(
+        name="Ekspres",
+        category=category,
+        description="Ekspres 15cm firmy Simond",
+        quantity=100,
+        price_per_day=2.00,
+        deposit=30.00,
+    )
+    url = reverse('add_to_cart', args=[equipment.pk])
+    response = client.post(url)
+    assert response.status_code == 302
+
+    cart = client.session['cart']
+    assert str(equipment.pk) in cart
+    assert cart[str(equipment.pk)] == 1

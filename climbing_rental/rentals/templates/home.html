@@ -5,6 +5,7 @@
     <title>Title</title>
 </head>
 <body>
+<a href="{% url 'cart' %}">🛒 Koszyk ({{ request.session.cart|length }})</a>
         <ul>
           {% for category in categories %}
             <li>

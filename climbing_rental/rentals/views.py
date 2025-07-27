@@ -1,5 +1,5 @@
-from django.shortcuts import render, get_object_or_404  #funkcja render laczy dane z szablonem HTML oraz zwraca odpowiedz HTTP
-                                                        #funkcja get_object_or_404 - bezpiecznie pobiera objekt z bazy, zwroci 404 jezeli nie znajdzie
+from django.shortcuts import render, get_object_or_404, redirect  #funkcja render laczy dane z szablonem HTML oraz zwraca odpowiedz HTTP
+                                                                  #funkcja get_object_or_404 - bezpiecznie pobiera objekt z bazy, zwroci 404 jezeli nie znajdzie
 from .models import Equipment, Category
 
 
@@ -82,3 +82,16 @@ def cart_view(request):
         'total_deposit': total_deposit,
     }
     return render(request, 'cart.html', context)
+
+
+
+def add_to_cart(request, equipment_id):
+    equipment = get_object_or_404(Equipment, pk=equipment_id)
+    cart = request.session.get('cart', {})
+    if str(equipment_id) in cart:
+        cart[str(equipment_id)] += 1
+    else:
+        cart[str(equipment_id)] = 1
+    request.session['cart'] = cart
+
+    return redirect(request.META.get('HTTP_REFERER', 'home'))
