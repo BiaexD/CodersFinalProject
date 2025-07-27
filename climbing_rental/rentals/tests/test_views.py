@@ -96,3 +96,21 @@ def test_category_detail_view(client):
     content2 = response2.content.decode()
     assert "Raki koszykowe" not in content2
     assert "Ekspres" in content2
+
+
+
+@pytest.mark.django_db
+def test_home_view(client):
+    Category.objects.create(name="Zima")
+    Category.objects.create(name="Skaly")
+    Category.objects.create(name="Via ferrata")
+    url = reverse('home')
+    response = client.get(url)
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Zima" in content
+    assert "Skaly" in content
+    assert "Via ferrata" in content
+
+
+
