@@ -3,6 +3,7 @@ from django.shortcuts import render, get_object_or_404, redirect  #funkcja rende
 from .models import Equipment, Category
 
 
+
 """
 equipment_list - przyjmuje argument request, ktory zawiera wszystkie dane o zadaniu HTTP(kto wyslal zapytanie i jaka metoda)
 
@@ -86,12 +87,24 @@ def cart_view(request):
 
 
 def add_to_cart(request, equipment_id):
-    equipment = get_object_or_404(Equipment, pk=equipment_id)
+    # equipment = get_object_or_404(Equipment, pk=equipment_id)
     cart = request.session.get('cart', {})
     if str(equipment_id) in cart:
         cart[str(equipment_id)] += 1
     else:
         cart[str(equipment_id)] = 1
+
     request.session['cart'] = cart
 
     return redirect(request.META.get('HTTP_REFERER', 'home'))
+
+
+
+def remove_from_cart(request, equipment_id):
+    cart = request.session.get('cart', {})
+    if str(equipment_id) in cart:
+        del cart[str(equipment_id)]
+
+    request.session['cart'] = cart
+
+    return redirect('cart')

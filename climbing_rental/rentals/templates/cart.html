@@ -20,6 +20,12 @@
                     <td>{{ item.quantity }}</td>
                     <td>{{ item.price }} zł</td>
                     <td>{{ item.deposit }} zł</td>
+                    <td>
+                        <form action="{% url 'remove_from_cart' item.equipment.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">🗑️ Usuń</button>
+                        </form>
+                    </td>
                 </tr>
             {% endfor %}
         </table>

@@ -3,8 +3,6 @@ from importlib.resources import contents
 import pytest
 from django.urls import reverse
 from rentals.models import Category, Equipment
-from django.shortcuts import render
-from django.contrib.auth.models import User
 
 
 """
@@ -197,3 +195,26 @@ def test_add_to_cart_view(client):
     cart = session.get('cart', {})
     assert str(equipment.pk) in cart
     assert cart[str(equipment.pk)] == 1
+
+
+
+@pytest.mark.django_db
+def test_remove_from_cart_view(client):
+    category = Category.objects.create(name="Skaly")
+    equipment = Equipment.objects.create(
+        name="Ekspres",
+        category=category,
+        description="Ekspres 15cm firmy Simond",
+        quantity=100,
+        price_per_day=2.00,
+        deposit=30.00,
+    )
+    add_url = reverse('add_to_cart', args=[equipment.pk])
+    client.post(add_url)
+    session = client.session
+    assert str(equipment.pk) in session.get('cart', {})
+
+    remove_url = reverse('remove_from_cart', args=[equipment.pk])
+    client.post(remove_url)
+    session = client.session
+    assert str(equipment.pk) not in session.get('cart', {})
