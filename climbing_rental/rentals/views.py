@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect  #funkcja render laczy dane z szablonem HTML oraz zwraca odpowiedz HTTP
                                                                   #funkcja get_object_or_404 - bezpiecznie pobiera objekt z bazy, zwroci 404 jezeli nie znajdzie
 from .models import Equipment, Category
+from django.views.decorators.http import require_POST
 
 
 
@@ -95,7 +96,6 @@ def add_to_cart(request, equipment_id):
         cart[str(equipment_id)] = 1
 
     request.session['cart'] = cart
-
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
@@ -106,5 +106,31 @@ def remove_from_cart(request, equipment_id):
         del cart[str(equipment_id)]
 
     request.session['cart'] = cart
+    return redirect('cart')
 
+
+
+@require_POST
+def increase_quantity(request, equipment_id):
+    cart = request.session.get('cart', {})
+    equipment_id = str(equipment_id)
+    if str(equipment_id) in cart:
+        cart[equipment_id] += 1
+
+    request.session['cart'] = cart
+    return redirect('cart')
+
+
+
+@require_POST
+def decrease_quantity(request, equipment_id):
+    cart = request.session.get('cart', {})
+    equipment_id = str(equipment_id)
+    if str(equipment_id) in cart:
+        if cart[equipment_id] > 1:
+            cart[equipment_id] -= 1
+        else:
+            del cart[equipment_id]
+
+    request.session['cart'] = cart
     return redirect('cart')

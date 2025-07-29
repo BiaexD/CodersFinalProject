@@ -17,7 +17,19 @@
             {% for item in items %}
                 <tr>
                     <td>{{ item.equipment.name }}</td>
-                    <td>{{ item.quantity }}</td>
+                    <td>
+                        <form action="{% url 'decrease_quantity' item.equipment.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">−</button>
+                        </form>
+
+                        {{ item.quantity }}
+
+                        <form action="{% url 'increase_quantity' item.equipment.id %}" method="post" style="display:inline;">
+                            {% csrf_token %}
+                            <button type="submit">+</button>
+                        </form>
+                    </td>
                     <td>{{ item.price }} zł</td>
                     <td>{{ item.deposit }} zł</td>
                     <td>

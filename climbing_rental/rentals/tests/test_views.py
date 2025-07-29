@@ -218,3 +218,85 @@ def test_remove_from_cart_view(client):
     client.post(remove_url)
     session = client.session
     assert str(equipment.pk) not in session.get('cart', {})
+
+
+"""
+client.session - pobieramy koszyk clienta (ktory Django trzyma w sesji)
+session['cart'] = {str(equipment.id): 1} - wkladamy do koszyka 1 sztuke sprzetu o danym str(ID)
+session.save() - zapisujemy koszyk z ta 1 sztuka
+
+url = reverse('increase_quantity', args=[equipment.id]):
+- przygotowujemy adres, ktory client odwiedza po kliknieciu "+" - 'increase_quantity' 
+
+response = client.post(url):
+- to tak jakby client kliknal + przy sprzecie
+- POST oznacza ze cos zmieniamy - tutaj akurat ilosc sprzetu
+
+response.status_code == 302:
+- sprawdzamy czy client zostal poprawnie przekierowany - kod 302(reditect HTTP)
+
+response.url == reverse('cart'):
+- sprawdzamy czy client zostal przekierowany pod dokladnie ten adres ('cart')
+
+session = client.session:
+- znowu pobieramy koszyk klienta po wczesniejszych zmianach
+
+assert session['cart'][str(equipment.pk)] == 2:
+sprawdzamy czy koszyk w ten sesji zawiera 2 sztuki dodanego produktu
+"""
+@pytest.mark.django_db
+def test_increase_quantity_view(client):
+    category = Category.objects.create(name="Zima")
+    equipment = Equipment.objects.create(
+        name="Raki koszykowe",
+        category=category,
+        description="Rakoi koszykowe firmy Climbing Technology",
+        quantity=20,
+        price_per_day=10.00,
+        deposit=80.00,
+    )
+
+    session = client.session
+    session['cart'] = {str(equipment.pk): 1}
+    session.save()
+
+    url = reverse('increase_quantity', args=[equipment.pk])
+    response = client.post(url)
+    assert response.status_code == 302
+    assert response.url == reverse('cart')
+
+    session = client.session
+    assert session['cart'][str(equipment.id)] == 2
+
+
+
+@pytest.mark.django_db
+def test_decrease_quantity_adn_remove_view(client):
+    category = Category.objects.create(name="Zima")
+    equipment = Equipment.objects.create(
+        name="Raki koszykowe",
+        category=category,
+        description="Raki koszykowe firmy Climbing Technology",
+        quantity=20,
+        price_per_day=10.00,
+        deposit=80.00,
+    )
+    session = client.session
+    session['cart'] = {str(equipment.pk): 2}
+    session.save()
+
+    url = reverse('decrease_quantity', args=[equipment.pk])
+    response = client.post(url)
+    assert response.status_code == 302
+    assert response.url == reverse('cart')
+
+    session = client.session
+    assert session['cart'][str(equipment.pk)] == 1
+
+    url = reverse('decrease_quantity', args=[equipment.pk])
+    response = client.post(url)
+    assert response.status_code == 302
+    assert response.url == reverse('cart')
+
+    session = client.session
+    assert str(equipment.pk) not in session['cart']
