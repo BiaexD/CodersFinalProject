@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Podsumowanie zamówienia</title>
+</head>
+<body>
+    <h1>Potwierdź zamówienie</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <ul>
+            {% for item in items %}
+                <li>
+                    {{ item.equipment.name }} – ilość: {{ item.quantity }}
+                </li>
+            {% endfor %}
+        </ul>
+
+        <button type="submit">Zamawiam</button>
+    </form>
+
+    <p><a href="{% url 'cart' %}">← Powrót do koszyka</a></p>
+</body>
+</html>

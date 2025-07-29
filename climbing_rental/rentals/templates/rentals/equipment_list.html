@@ -1,19 +1,12 @@
 <!DOCTYPE html>
 <html>
-
-<!--definiujemy dokument HTML z tytulem strony-->
 <head>
     <title>Lista sprzętu</title>
 </head>
 <body>
-
-<!--duzy naglowek na gorze-->
     <h1>Sprzęt dostępny w wypożyczalni</h1>
 
-<!--tabela z obramowaniem-->
     <table border="1">
-
-        <!--naglowki kolumn-->
         <tr>
             <th>Nazwa</th>
             <th>Kategoria</th>
@@ -23,10 +16,7 @@
             <th>Kaucja</th>
         </tr>
 
-        <!--petla for dzieki ktorej django wstawia jeden wiersz z kazdej tablei-->
         {% for item in equipment %}
-
-        <!--w kazdym wierszu wstawiamy dane konkretnego sprzetu-->
         <tr>
             <td>
                 <a href="{% url 'equipment_detail' item.pk %}">
@@ -39,8 +29,6 @@
             <td>{{ item.price_per_day }} zł</td>
             <td>{{ item.deposit }} zł</td>
         </tr>
-
-        <!--zamykamy petle for-->
         {% endfor %}
     </table>
 </body>

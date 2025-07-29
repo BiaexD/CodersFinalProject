@@ -1,30 +1,9 @@
 from importlib.resources import contents
-
 import pytest
 from django.urls import reverse
 from rentals.models import Category, Equipment
 
 
-"""
-@pytest.mark.django_db - dekorator mowi pytestowi ze ten test bedzie korzystal z bazy danych
-
-client - to specjalny obiekt dostarczany przez django ktory symuluje przegladarne (GET, POST itp)
-
-category - tworzymy kategoriw, bo sprzet musi byc do niej przypisany (ForeignKey)
-
-Equipment.objects.create(...) - tworzymy sprzet, dzieki temu widok ma co wyswietlic
-
-url - pobieramy sciezke /equipment/
-
-response - wysylamy symulowane zadanie GET(get pokazuje nam cos)
-
-assert response 200 - sprawdzamy czy serwer zwrocil OK
-
-assert "Lina Beal" - sprawdzamy czy nazwa sprzetu pojawila sie w HTML
-
-response.content – to surowy HTML w bajtach (b'<html>...').
-.decode() zamienia go na zwykły tekst ('<html>...'), żebyśmy mogli go przeszukać.
-"""
 
 @pytest.mark.django_db
 def test_equipment_list_view(client):
@@ -115,14 +94,7 @@ def test_home_view(client):
     assert "Via ferrata" in content
 
 
-"""
-client.session - pobieramy dane z sesji testowego uzytkownika (cos na ksztalt ciasteczek) - Django przechowuje koszyk w tej sesji – w postaci słownika (dict).
-session['cart'] - dodajemy 2 sprzety do koszyka tak jakby klient umiescil je za pomoca dodaj
-session.save() - zapisujemy te zmiany w sesji
 
-url = reverse('cart') – funkcja Django, która tłumaczy nazwę ścieżki (cart) na jej prawdziwy adres URL
-client.get(url) - symulujemy wejscie na strone uzytkownika /cart/
-"""
 @pytest.mark.django_db
 def test_cart_view(client):
     category = Category.objects.create(name="Zima")
@@ -149,33 +121,7 @@ def test_cart_view(client):
     assert "200.00" in content
 
 
-"""
-args=[equipment.pk]:
-- oznacza, że podstawiamy ID naszego sprzętu do ścieżki URL.
 
-client.post(url):
-- To jest POST, czyli wysyłamy formularz – tak jakbyśmy kliknęli przycisk „Dodaj do koszyka”.
-- symuluje wysylanie formularza
-
-response.status_code == 302:
-- sprawdzamy czy nasz post zadzialal i wlozyl cos do koszyka
-
-session = client.session:
-- Otwieramy „plecak użytkownika” – czyli sesję.
-- Django przechowuje koszyk w tej sesji – w postaci słownika (dict).
-
-cart = session.get('cart', {}):
-- Pobieramy zawartość koszyka z sesji.
-- Jeśli koszyka nie ma (pierwsze użycie) – dostaniemy pusty słownik {}.
-                               
-assert str(equipment.pk) in cart:
-- Sprawdzamy, czy nasz sprzęt jest w koszyku.
-- equipment.pk to ID sprzętu, np. 3, ale koszyk przechowuje to jako tekst '3', więc musimy zrobić str(...)
-
-assert cart[str(equipment.pk)] == 1:
-- Sprawdzamy, czy ilość danego sprzętu w koszyku wynosi 1.
-- Bo raz kliknęliśmy „Dodaj do koszyka”, więc powinien być 1.
-"""
 @pytest.mark.django_db
 def test_add_to_cart_view(client):
     category = Category.objects.create(name="Skaly")
@@ -220,30 +166,7 @@ def test_remove_from_cart_view(client):
     assert str(equipment.pk) not in session.get('cart', {})
 
 
-"""
-client.session - pobieramy koszyk clienta (ktory Django trzyma w sesji)
-session['cart'] = {str(equipment.id): 1} - wkladamy do koszyka 1 sztuke sprzetu o danym str(ID)
-session.save() - zapisujemy koszyk z ta 1 sztuka
 
-url = reverse('increase_quantity', args=[equipment.id]):
-- przygotowujemy adres, ktory client odwiedza po kliknieciu "+" - 'increase_quantity' 
-
-response = client.post(url):
-- to tak jakby client kliknal + przy sprzecie
-- POST oznacza ze cos zmieniamy - tutaj akurat ilosc sprzetu
-
-response.status_code == 302:
-- sprawdzamy czy client zostal poprawnie przekierowany - kod 302(reditect HTTP)
-
-response.url == reverse('cart'):
-- sprawdzamy czy client zostal przekierowany pod dokladnie ten adres ('cart')
-
-session = client.session:
-- znowu pobieramy koszyk klienta po wczesniejszych zmianach
-
-assert session['cart'][str(equipment.pk)] == 2:
-sprawdzamy czy koszyk w ten sesji zawiera 2 sztuki dodanego produktu
-"""
 @pytest.mark.django_db
 def test_increase_quantity_view(client):
     category = Category.objects.create(name="Zima")
@@ -251,7 +174,7 @@ def test_increase_quantity_view(client):
         name="Raki koszykowe",
         category=category,
         description="Rakoi koszykowe firmy Climbing Technology",
-        quantity=20,
+        quantity=2,
         price_per_day=10.00,
         deposit=80.00,
     )
@@ -267,6 +190,17 @@ def test_increase_quantity_view(client):
 
     session = client.session
     assert session['cart'][str(equipment.id)] == 2
+
+    url = reverse('increase_quantity', args=[equipment.pk])
+    response = client.post(url)
+    assert response.status_code == 302
+    assert response.url == reverse('cart')
+
+    cart_after = client.session['cart']
+    assert cart_after[str(equipment.id)] == 2
+
+    messages = list(response.wsgi_request._messages)
+    assert any("Nie mamy więcej" in str(m) for m in messages)
 
 
 

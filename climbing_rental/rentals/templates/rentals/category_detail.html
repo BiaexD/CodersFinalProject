@@ -8,13 +8,9 @@
     <h1>Sprzęt w kategorii: {{ category.name }}</h1>
     <a href="{% url 'cart' %}">Koszyk ({{ request.session.cart|length }})</a>
     <ul>
-      <!-- 🔹 pętla for: dla każdego sprzętu (item) z equipment_list
-              – pokaż nazwę, cenę za dobę i kaucję
-               – jeśli lista jest pusta: pokaż komunikat „Brak sprzętu…” -->
         {% for item in equipment_list %}
             <li>
                 <strong>{{ item.name }}</strong> – {{ item.price_per_day }} zł/doba, kaucja: {{ item.deposit }} zł
-                        <!-- FORMULARZ dodający do koszyka -->
                         <form action="{% url 'add_to_cart' item.pk %}" method="post" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit">Dodaj do koszyka</button>

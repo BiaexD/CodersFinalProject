@@ -1,39 +1,17 @@
-from django.shortcuts import render, get_object_or_404, redirect  #funkcja render laczy dane z szablonem HTML oraz zwraca odpowiedz HTTP
-                                                                  #funkcja get_object_or_404 - bezpiecznie pobiera objekt z bazy, zwroci 404 jezeli nie znajdzie
-from .models import Equipment, Category
-from django.views.decorators.http import require_POST
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Equipment, Category, Rental, RentalItem
+from django.views.decorators.http import require_POST, require_http_methods
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
 
 
 
-"""
-equipment_list - przyjmuje argument request, ktory zawiera wszystkie dane o zadaniu HTTP(kto wyslal zapytanie i jaka metoda)
-
-equipment - pobieramy wszystkie objekty Equipment z bazy, a 'objects.all() zwraca nam liste sprzetow.
-
-zwracamy render - ktory robi trzy rzeczy na raz:
-- szuka szablonu HTML o podanej sciezce
-- do szablonu przekazuje slownik danych ({'eq...': eq...})
-- tworzy odpowiedz HTTP i ja zwraca
-"""
 def equipment_list(request):
     equipment = Equipment.objects.all()
     return render(request, 'rentals/equipment_list.html', {'equipment': equipment})
 
 
-"""
-equipment_detail:
-- przyjmuje argument request, ktory zawiera wszystkie dane o zadaniu HTTP(kto wyslal zapytanie i jaka metoda
-- primary key - identyfikator sprzetu
 
-equipment - django szuka sprzetu o danym "pk" w bazie:
-- jezeli nie znajdzie wyswietli 404
-- jezeli znajdzie przypisze do zmiennej equipment
-
-return render:
-- szuka szablonu HTML
-- przekazujemy do niego zmienna equipment z calym objektem
-- tworzy odpowiedz HTTP i ja zwraca
-"""
 def equipment_detail(request, pk):
     equipment = get_object_or_404(Equipment, pk=pk)
     return render(request, 'rentals/equipment_detail.html', {'equipment': equipment})
@@ -114,8 +92,15 @@ def remove_from_cart(request, equipment_id):
 def increase_quantity(request, equipment_id):
     cart = request.session.get('cart', {})
     equipment_id = str(equipment_id)
-    if str(equipment_id) in cart:
-        cart[equipment_id] += 1
+    equipment = get_object_or_404(Equipment, pk=equipment_id)
+    current_quantity = cart.get(str(equipment_id), 0)
+
+    if current_quantity < equipment.quantity:
+        cart[equipment.pk] = current_quantity + 1
+    else:
+        messages.error(request, f"Nie mamy więcej {equipment.name}...")
+    # if str(equipment_id) in cart:
+    #     cart[equipment_id] += 1
 
     request.session['cart'] = cart
     return redirect('cart')
@@ -134,3 +119,35 @@ def decrease_quantity(request, equipment_id):
 
     request.session['cart'] = cart
     return redirect('cart')
+
+
+
+@require_http_methods(['GET', 'POST'])
+def order_summary(request):
+    cart = request.session.get('cart', {})
+    items = []
+
+    if request.method == "POST":
+        for equipment_id, quantity in cart.items():
+            equipment = Equipment.objects.get(pk=equipment_id)
+
+            if equipment.quantity >= quantity:
+                equipment.quantity -= quantity
+                equipment.save()
+            else:
+                messages.error(request, f"Nie mamy wystarczajacej liczby: {equipment.name} na magazynie")
+                return redirect('cart')
+        request.session['cart'] = {}
+
+        messages.success(request, "Zamowienie przeslano do realizacji")
+        return redirect('home')
+
+    else:
+        for equipment_id, quantity in cart.items():
+            equipment = Equipment.objects.get(pk=equipment_id)
+            items.append({
+                'equipment': equipment,
+                'quantity': quantity,
+            })
+
+        return render(request, 'rentals/order_summary.html', {'items': items})
