@@ -49,6 +49,10 @@
         </table>
         <p><strong>Razem do zapłaty za dzień:</strong> {{ total_price_per_day }} zł</p>
         <p><strong>Razem kaucji:</strong> {{ total_deposit }} zł</p>
+
+        <form action="{% url 'order_summary' %}" method="get">
+            <button type="submit">Przejdź do zamówienia</button>
+        </form>
     {% else %}
         <p>Koszyk jest pusty.</p>
     {% endif %}

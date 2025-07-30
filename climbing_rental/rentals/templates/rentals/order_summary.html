@@ -8,6 +8,14 @@
 
     <form method="post">
         {% csrf_token %}
+
+        <label for="start_date">Data rozpoczęcia wypożyczenia:</label><br>
+        <input type="date" id="start_date" name="start_date" required><br><br>
+
+        <label for="end_date">Data zakończenia wypożyczenia:</label><br>
+        <input type="date" id="end_date" name="end_date" required><br><br>
+
+        <h3>Sprzęt do wypożyczenia:</h3>
         <ul>
             {% for item in items %}
                 <li>

@@ -1,8 +1,11 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import Equipment, Category, Rental, RentalItem
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import login
+from django.utils import timezone
 
 
 
@@ -123,20 +126,46 @@ def decrease_quantity(request, equipment_id):
 
 
 @require_http_methods(['GET', 'POST'])
+@login_required
 def order_summary(request):
     cart = request.session.get('cart', {})
     items = []
 
     if request.method == "POST":
+        start_date = request.POST.get('start_date')
+        end_date = request.POST.get('end_date')
+
+        if not start_date or not end_date:
+            messages.error(request, "Musisz wybrac obie daty!")
+            return redirect('order_summary')
+        if start_date > end_date:
+            messages.error(request, "Data konca musi byc pozniej niz poczatek!")
+            return redirect('order_summary')
+
         for equipment_id, quantity in cart.items():
             equipment = Equipment.objects.get(pk=equipment_id)
-
-            if equipment.quantity >= quantity:
-                equipment.quantity -= quantity
-                equipment.save()
-            else:
+            if equipment.quantity < quantity:
                 messages.error(request, f"Nie mamy wystarczajacej liczby: {equipment.name} na magazynie")
                 return redirect('cart')
+
+        rental = Rental.objects.create(
+            user=request.user,
+            start_date=start_date,
+            end_date=end_date,
+            status='pending',
+            created_at=timezone.now()
+        )
+
+        for equipment_id, quantity in cart.items():
+            equipment = Equipment.objects.get(pk=equipment_id)
+            RentalItem.objects.create(
+                rental=rental,
+                equipment=equipment,
+                quantity=quantity,
+            )
+            equipment.quantity -= quantity
+            equipment.save()
+
         request.session['cart'] = {}
 
         messages.success(request, "Zamowienie przeslano do realizacji")
@@ -151,3 +180,26 @@ def order_summary(request):
             })
 
         return render(request, 'rentals/order_summary.html', {'items': items})
+
+
+
+def register(request):
+    if request.method == "POST":
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            return redirect('home')
+    else:
+        form = UserCreationForm()
+    return render(request, 'registration/register.html', {'form': form})
+
+
+
+@login_required
+def user_panel(request):
+    rentals = Rental.objects.filter(user=request.user)
+    return render(request, 'rentals/user_panel.html', {'rentals': rentals})
+
+
+
