@@ -1,6 +1,5 @@
 from django.db import models
 from django.conf import settings
-from django.utils import timezone
 
 
 
@@ -45,6 +44,28 @@ class Rental(models.Model):
 
 class RentalItem(models.Model):
     rental = models.ForeignKey(Rental, on_delete=models.CASCADE, related_name='items')
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+    quantity = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f"{self.equipment.name} x {self.quantity}"
+
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return f"Koszyk {self.user.username} ({self.start_date} - {self.end_date})"
+
+
+
+class CartItem(models.Model):
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE)
     equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
     quantity = models.PositiveIntegerField()
 
