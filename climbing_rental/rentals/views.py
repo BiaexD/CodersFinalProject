@@ -71,6 +71,12 @@ def cart_view(request):
 def add_to_cart(request, equipment_id):
     # equipment = get_object_or_404(Equipment, pk=equipment_id)
     cart = request.session.get('cart', {})
+    equipment_in_cart = cart.get(str(equipment_id), 0)
+    equipment = Equipment.objects.get(pk=equipment_id)
+    if equipment.quantity < equipment_in_cart + 1:
+        category_id = equipment.category.id
+        messages.error(request, f"Nie mamy wystarczajacej liczby: {equipment.name} na magazynie")
+        return redirect('category_detail', category_id=category_id)
     if str(equipment_id) in cart:
         cart[str(equipment_id)] += 1
     else:
@@ -142,12 +148,6 @@ def order_summary(request):
             messages.error(request, "Data konca musi byc pozniej niz poczatek!")
             return redirect('order_summary')
 
-        for equipment_id, quantity in cart.items():
-            equipment = Equipment.objects.get(pk=equipment_id)
-            if equipment.quantity < quantity:
-                messages.error(request, f"Nie mamy wystarczajacej liczby: {equipment.name} na magazynie")
-                return redirect('cart')
-
         rental = Rental.objects.create(
             user=request.user,
             start_date=start_date,
@@ -169,7 +169,7 @@ def order_summary(request):
         request.session['cart'] = {}
 
         messages.success(request, "Zamowienie przeslano do realizacji")
-        return redirect('home')
+        return redirect('order_complete')
 
     else:
         for equipment_id, quantity in cart.items():
@@ -180,6 +180,11 @@ def order_summary(request):
             })
 
         return render(request, 'rentals/order_summary.html', {'items': items})
+
+
+
+def order_complete(request):
+    return render(request, 'rentals/order_complete.html')
 
 
 
