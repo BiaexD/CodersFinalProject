@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth import login
 from django.utils import timezone
+from django.db.models import Sum
 
 
 
@@ -29,11 +30,39 @@ def home(request):
 
 def category_detail(request, category_id):
     category = get_object_or_404(Category, pk=category_id)
-    equipment_list = Equipment.objects.filter(category=category)
-    return render(request, 'rentals/category_detail.html', {
+    try:
+        cart = Cart.objects.get(user=request.user, is_active=True)
+    except Cart.DoesNotExist:
+        return redirect('select_dates')
+
+    start_date = cart.start_date
+    end_date = cart.end_date
+
+    available_equipment = []
+    for equipment in Equipment.objects.filter(category=category):
+        already_reserved = (
+            CartItem.objects.filter(
+                equipment=equipment,
+                cart__start_date__lte=end_date,
+                cart__end_date__gte=start_date,
+                cart__is_active=True
+            )
+            .aggregate(total=Sum('quantity'))['total'] or 0
+        )
+
+        left = equipment.quantity - already_reserved
+        if left > 0:
+            available_equipment.append({
+                'equipment': equipment,
+                'available': left,
+            })
+    context = {
         'category': category,
-        'equipment_list': equipment_list,
-    })
+        'equipment_list': available_equipment,
+        'cart': cart,
+    }
+
+    return render(request, 'rentals/category_detail.html', context)
 
 
 
@@ -69,7 +98,6 @@ def cart_view(request):
 
 
 def add_to_cart(request, equipment_id):
-    # equipment = get_object_or_404(Equipment, pk=equipment_id)
     cart = request.session.get('cart', {})
     equipment_in_cart = cart.get(str(equipment_id), 0)
     equipment = Equipment.objects.get(pk=equipment_id)
@@ -141,12 +169,12 @@ def order_summary(request):
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
 
-        if not start_date or not end_date:
-            messages.error(request, "Musisz wybrac obie daty!")
-            return redirect('order_summary')
-        if start_date > end_date:
-            messages.error(request, "Data konca musi byc pozniej niz poczatek!")
-            return redirect('order_summary')
+        # if not start_date or not end_date:
+        #     messages.error(request, "Musisz wybrac obie daty!")
+        #     return redirect('select_dates')
+        # if start_date > end_date:
+        #     messages.error(request, "Data konca musi byc pozniej niz poczatek!")
+        #     return redirect('select_dates')
 
         rental = Rental.objects.create(
             user=request.user,
@@ -214,14 +242,20 @@ def select_dates(request):
         start_date = request.POST.get("start_date")
         end_date = request.POST.get("end_date")
 
-        Cart.objects.filter(user=request.user, is_active=True).update()
+        if not start_date or not end_date:
+            messages.error(request, "Musisz wybrac obie daty!")
+            return redirect('select_dates')
+        if start_date > end_date:
+            messages.error(request, "Data konca musi byc pozniej niz poczatek!")
+            return redirect('select_dates')
+
+        Cart.objects.filter(user=request.user, is_active=True).update(is_active=False)
 
         cart = Cart.objects.create(
             user=request.user,
             start_date=start_date,
             end_date=end_date,
-            status='pending',
-            created_at=timezone.now()
+            is_active=True
         )
         return redirect('home')
 

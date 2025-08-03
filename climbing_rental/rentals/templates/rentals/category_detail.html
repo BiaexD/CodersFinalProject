@@ -10,12 +10,13 @@
     <ul>
         {% for item in equipment_list %}
             <li>
-                <strong>{{ item.name }}</strong> – {{ item.price_per_day }} zł/doba, kaucja: {{ item.deposit }} zł
-                        <form action="{% url 'add_to_cart' item.pk %}" method="post" style="display:inline;">
+                <strong>{{ item.equipment.name }}</strong>
+                – {{ item.equipment.price_per_day }} zł/doba, kaucja: {{ item.equipment.deposit }} zł
+                        <form action="{% url 'add_to_cart' item.equipment.pk %}" method="post" style="display:inline;">
                             {% csrf_token %}
                             <button type="submit">Dodaj do koszyka</button>
                         </form>
-                dostepne: {{ item.quantity }}
+                (dostepne: {{ item.available }})
             </li>
         {% empty %}
             <li>Brak sprzętu w tej kategorii.</li>

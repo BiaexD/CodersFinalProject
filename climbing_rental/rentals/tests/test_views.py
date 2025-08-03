@@ -1,7 +1,8 @@
 from importlib.resources import contents
 import pytest
+from django.contrib.auth.models import User
 from django.urls import reverse
-from rentals.models import Category, Equipment
+from rentals.models import Category, Equipment, Cart, CartItem
 
 
 
@@ -41,40 +42,49 @@ def test_equipment_detail_view(client):
 
 
 @pytest.mark.django_db
-def test_category_detail_view(client):
-    category1 = Category.objects.create(name="Zima")
-    category2 = Category.objects.create(name="Skaly")
-    Equipment.objects.create(
-        name="Raki koszykowe",
-        category=category1,
-        description="Raki koszykowe firmy Climbing Technology",
-        quantity=10,
-        price_per_day=10.00,
-        deposit=100.00,
+def test_category_detail_shows_only_available_equipment(client):
+    user = User.objects.create_user(username="tester", password="hasloTest123")
+    client.login(username="tester", password="hasloTest123")
+
+    category = Category.objects.create(name="Zima")
+    eq1 = Equipment.objects.create(
+        name="Raki Petzl",
+        category=category,
+        quantity=5,
+        price_per_day=10.0,
+        deposit=100.0,
     )
-    Equipment.objects.create(
-        name="Ekspres",
-        category=category2,
-        description="Ekspres 15cm firmy Simond",
-        quantity=100,
-        price_per_day=2.00,
-        deposit=30.00,
+    eq2 = Equipment.objects.create(
+        name="Czekan Black Diamond",
+        category=category,
+        quantity=2,
+        price_per_day=15.0,
+        deposit=120.0,
     )
-    url1 = reverse('category_detail', args=[category1.pk])
-    response1 = client.get(url1)
-    assert response1.status_code ==200
 
-    content1 = response1.content.decode()
-    assert "Raki koszykowe" in content1
-    assert "Ekspres" not in content1
+    cart = Cart.objects.create(
+        user=user,
+        start_date="2025-10-01",
+        end_date="2025-10-07",
+        is_active=True
+    )
 
-    url2 = reverse('category_detail', args=[category2.pk])
-    response2 = client.get(url2)
-    assert response2.status_code ==200
+    other_user = User.objects.create_user(username="inna_osoba", password="haslo123")
+    other_cart = Cart.objects.create(
+        user=other_user,
+        start_date="2025-10-01",
+        end_date="2025-10-07",
+        is_active=True
+    )
 
-    content2 = response2.content.decode()
-    assert "Raki koszykowe" not in content2
-    assert "Ekspres" in content2
+    CartItem.objects.create(cart=other_cart, equipment=eq2, quantity=2)
+
+    url = reverse('category_detail', args=[category.pk])
+    response = client.get(url)
+    content = response.content.decode()
+
+    assert "Raki Petzl" in content
+    assert "Czekan Black Diamond" not in content
 
 
 
@@ -234,3 +244,32 @@ def test_decrease_quantity_adn_remove_view(client):
 
     session = client.session
     assert str(equipment.pk) not in session['cart']
+
+
+
+@pytest.mark.django_db
+def test_select_dates_desactivates_previous_cart(client):
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+
+    old_cart = Cart.objects.create(
+        user=user,
+        start_date="2025-08-10",
+        end_date="2025-08-15",
+        is_active=True,
+    )
+
+    url = reverse('select_dates')
+    response = client.post(url, {
+        'start_date': '2025-09-01',
+        'end_date': '2025-09-05',
+    })
+
+    old_cart.refresh_from_db()
+    assert old_cart.is_active == False
+
+    new_cart = Cart.objects.get(user=user, is_active=True)
+    assert str(new_cart.start_date) == "2025-09-01"
+    assert str(new_cart.end_date) == "2025-09-05"
+
+    assert response.status_code == 302

@@ -13,6 +13,15 @@
         <label for="end_date">Data końcowa:</label>
         <input type="date" name="end_date" id="end_date" required>
         <br><br>
+
+        {% if messages %}
+          <ul>
+            {% for message in messages %}
+              <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
         <button type="submit">Zatwierdź</button>
     </form>
 </body>
