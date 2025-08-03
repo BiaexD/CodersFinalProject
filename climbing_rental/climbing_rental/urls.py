@@ -24,7 +24,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('', home, name='home'),
     path('', include('rentals.urls')),
-    path('accounts/login/', auth_views.LoginView.as_view(next_page='home'), name='login'),
-    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='home'), name='logout'),
+    path('accounts/login/', auth_views.LoginView.as_view(next_page='select_dates'), name='login'),
+    path('accounts/logout/', auth_views.LogoutView.as_view(next_page='login'), name='logout'),
     path('accounts/register/', register, name='register'),
 ]

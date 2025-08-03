@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Equipment, Category, Rental, RentalItem
+from .models import Equipment, Category, Rental, RentalItem, Cart, CartItem
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -208,3 +208,21 @@ def user_panel(request):
 
 
 
+@login_required
+def select_dates(request):
+    if request.method == "POST":
+        start_date = request.POST.get("start_date")
+        end_date = request.POST.get("end_date")
+
+        Cart.objects.filter(user=request.user, is_active=True).update()
+
+        cart = Cart.objects.create(
+            user=request.user,
+            start_date=start_date,
+            end_date=end_date,
+            status='pending',
+            created_at=timezone.now()
+        )
+        return redirect('home')
+
+    return render(request, 'rentals/select_dates.html')

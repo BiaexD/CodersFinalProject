@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Wybierz termin wypożyczenia</title>
+</head>
+<body>
+    <h1>Wybierz termin wypożyczenia</h1>
+    <form method="post">
+        {% csrf_token %}
+        <label for="start_date">Data początkowa:</label>
+        <input type="date" name="start_date" id="start_date" required>
+        <br>
+        <label for="end_date">Data końcowa:</label>
+        <input type="date" name="end_date" id="end_date" required>
+        <br><br>
+        <button type="submit">Zatwierdź</button>
+    </form>
+</body>
+</html>
