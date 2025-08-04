@@ -98,19 +98,32 @@ def cart_view(request):
 
 
 def add_to_cart(request, equipment_id):
-    cart = request.session.get('cart', {})
-    equipment_in_cart = cart.get(str(equipment_id), 0)
-    equipment = Equipment.objects.get(pk=equipment_id)
-    if equipment.quantity < equipment_in_cart + 1:
-        category_id = equipment.category.id
-        messages.error(request, f"Nie mamy wystarczajacej liczby: {equipment.name} na magazynie")
-        return redirect('category_detail', category_id=category_id)
-    if str(equipment_id) in cart:
-        cart[str(equipment_id)] += 1
-    else:
-        cart[str(equipment_id)] = 1
+    cart = Cart.objects.get(user=request.user, is_active=True)
+    equipment = get_object_or_404(Equipment, pk=equipment_id)
+    cart_item, created = CartItem.objects.get_or_create(
+        cart=cart,
+        equipment=equipment,
+        defaults={'quantity': 0}
+    )
 
-    request.session['cart'] = cart
+    total_reserved = (
+        CartItem.objects.filter(
+            equipment=equipment,
+            cart__start_date__lte=cart.end_date,
+            cart__end_date__gte=cart.start_date,
+            cart__is_active=True
+        )
+        .exclude(cart=cart)
+        .aggregate(total=Sum('quantity'))['total'] or 0
+    )
+    available = equipment.quantity - total_reserved
+    if cart_item.quantity < available:
+        cart_item.quantity += 1
+        cart_item.save()
+        # messages.success(request, f"Dodano {equipment.name} do koszyka")
+    else:
+        messages.error(request, f"Nie mozna dodac wiecej {equipment.name} w wybranym terminie")
+
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
