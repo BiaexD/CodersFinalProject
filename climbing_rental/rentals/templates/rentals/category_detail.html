@@ -6,7 +6,7 @@
 </head>
 <body>
     <h1>Sprzęt w kategorii: {{ category.name }}</h1>
-    <a href="{% url 'cart' %}">Koszyk ({{ request.session.cart|length }})</a>
+    <a href="{% url 'cart' %}">Koszyk ({{ cart_count }})</a>
     <ul>
         {% for item in equipment_list %}
             <li>

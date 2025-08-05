@@ -107,49 +107,75 @@ def test_home_view(client):
 
 @pytest.mark.django_db
 def test_cart_view(client):
-    category = Category.objects.create(name="Zima")
-    equipment = Equipment.objects.create(
-        name="Raki koszykowe",
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+
+    category = Category.objects.create(name="Skaly")
+    equipment1 = Equipment.objects.create(
+        name="Ekspres",
         category=category,
-        description="Raki koszykowe firmy Climbing Technology",
         quantity=10,
-        price_per_day=10.00,
-        deposit=100.00,
+        price_per_day=4.00,
+        deposit=30.0
     )
-    session = client.session
-    session['cart'] = {str(equipment.pk): 2}
-    session.save()
+    equipment2 = Equipment.objects.create(
+        name="Crashpad",
+        category=category,
+        quantity=5,
+        price_per_day=12.00,
+        deposit=100.0
+    )
+
+    cart = Cart.objects.create(
+        user=user,
+        start_date="2025-10-01",
+        end_date="2025-10-07",
+        is_active=True
+    )
+
+    CartItem.objects.create(
+        cart=cart,
+        equipment=equipment1,
+        quantity=2,
+    )
+    CartItem.objects.create(
+        cart=cart,
+        equipment=equipment2,
+        quantity=1,
+    )
 
     url = reverse('cart')
     response = client.get(url)
     assert response.status_code == 200
-
     content = response.content.decode()
-    assert "Raki koszykowe" in content
+    assert "Ekspres" in content
+    assert "Crashpad" in content
     assert "2" in content
-    assert "20.00" in content
-    assert "200.00" in content
+    assert "1" in content
+    assert "20.0" in content or "20.00" in content
+    assert "160.0" in content or "160.00" in content
 
 
 
 @pytest.mark.django_db
-def test_add_to_cart_respects_availability(client):
+def test_add_to_cart_view(client):
     user = User.objects.create_user(username='testuser', password='passwordtest')
     client.login(username='testuser', password='passwordtest')
 
     category = Category.objects.create(name="Skaly")
     equipment = Equipment.objects.create(
-        name="Crashpad",
+        name="Ekspres",
         category=category,
+        description="Ekspres 15 cm firmy Simond",
         quantity=5,
-        price_per_day=10.0,
-        deposit=100.0,
+        price_per_day=2.0,
+        deposit=30.0,
     )
 
     cart = Cart.objects.create(
         user=user,
         start_date="2025-08-01",
-        end_date="2025-08-05",
+        end_date="2025-08-10",
         is_active=True,
     )
 
@@ -172,96 +198,104 @@ def test_add_to_cart_respects_availability(client):
 
 
 
-# @pytest.mark.django_db
-# def test_remove_from_cart_view(client):
-#     category = Category.objects.create(name="Skaly")
-#     equipment = Equipment.objects.create(
-#         name="Ekspres",
-#         category=category,
-#         description="Ekspres 15cm firmy Simond",
-#         quantity=100,
-#         price_per_day=2.00,
-#         deposit=30.00,
-#     )
-#     add_url = reverse('add_to_cart', args=[equipment.pk])
-#     client.post(add_url)
-#     session = client.session
-#     assert str(equipment.pk) in session.get('cart', {})
-#
-#     remove_url = reverse('remove_from_cart', args=[equipment.pk])
-#     client.post(remove_url)
-#     session = client.session
-#     assert str(equipment.pk) not in session.get('cart', {})
+@pytest.mark.django_db
+def test_remove_from_cart_view(client):
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+
+    category = Category.objects.create(name="Skaly")
+    equipment = Equipment.objects.create(
+        name="Ekspres",
+        category=category,
+        description="Ekspres 15 cm firmy Simond",
+        quantity=5,
+        price_per_day=2.0,
+        deposit=30.0,
+    )
+
+    cart = Cart.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-10",
+        is_active=True,
+    )
+
+    cart_item = CartItem.objects.create(cart=cart, equipment=equipment, quantity=2)
+    url = reverse("remove_from_cart", args=[equipment.pk])
+    response = client.post(url)
+    assert response.status_code == 302
+    assert not CartItem.objects.filter(cart=cart, equipment=equipment).exists()
 
 
 
 @pytest.mark.django_db
 def test_increase_quantity_view(client):
-    category = Category.objects.create(name="Zima")
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+
+    category = Category.objects.create(name="Skaly")
     equipment = Equipment.objects.create(
-        name="Raki koszykowe",
+        name="Ekspres",
         category=category,
-        description="Rakoi koszykowe firmy Climbing Technology",
-        quantity=2,
-        price_per_day=10.00,
-        deposit=80.00,
+        description="Ekspres 15 cm firmy Simond",
+        quantity=5,
+        price_per_day=2.0,
+        deposit=30.0,
     )
 
-    session = client.session
-    session['cart'] = {str(equipment.pk): 1}
-    session.save()
+    cart = Cart.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-10",
+        is_active=True,
+    )
 
-    url = reverse('increase_quantity', args=[equipment.pk])
+    cart_item = CartItem.objects.create(cart=cart, equipment=equipment, quantity=4)
+    url = reverse("increase_quantity", args=[equipment.pk])
+
     response = client.post(url)
-    assert response.status_code == 302
-    assert response.url == reverse('cart')
+    cart_item.refresh_from_db()
+    assert cart_item.quantity == 5
 
-    session = client.session
-    assert session['cart'][str(equipment.id)] == 2
-
-    url = reverse('increase_quantity', args=[equipment.pk])
     response = client.post(url)
-    assert response.status_code == 302
-    assert response.url == reverse('cart')
-
-    cart_after = client.session['cart']
-    assert cart_after[str(equipment.id)] == 2
-
+    cart_item.refresh_from_db()
+    assert cart_item.quantity == 5
     messages = list(response.wsgi_request._messages)
-    assert any("Nie mamy więcej" in str(m) for m in messages)
+    assert any("nie mamy więcej" in str(m).lower() for m in messages)
 
 
 
 @pytest.mark.django_db
 def test_decrease_quantity_adn_remove_view(client):
-    category = Category.objects.create(name="Zima")
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+
+    category = Category.objects.create(name="Skaly")
     equipment = Equipment.objects.create(
-        name="Raki koszykowe",
+        name="Ekspres",
         category=category,
-        description="Raki koszykowe firmy Climbing Technology",
-        quantity=20,
-        price_per_day=10.00,
-        deposit=80.00,
+        description="Ekspres 15 cm firmy Simond",
+        quantity=5,
+        price_per_day=2.0,
+        deposit=30.0,
     )
-    session = client.session
-    session['cart'] = {str(equipment.pk): 2}
-    session.save()
 
-    url = reverse('decrease_quantity', args=[equipment.pk])
+    cart = Cart.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-10",
+        is_active=True,
+    )
+
+    cart_item = CartItem.objects.create(cart=cart, equipment=equipment, quantity=2)
+    url = reverse("decrease_quantity", args=[equipment.pk])
+
     response = client.post(url)
-    assert response.status_code == 302
-    assert response.url == reverse('cart')
+    cart_item.refresh_from_db()
+    assert cart_item.quantity == 1
 
-    session = client.session
-    assert session['cart'][str(equipment.pk)] == 1
-
-    url = reverse('decrease_quantity', args=[equipment.pk])
     response = client.post(url)
-    assert response.status_code == 302
-    assert response.url == reverse('cart')
-
-    session = client.session
-    assert str(equipment.pk) not in session['cart']
+    assert not CartItem.objects.filter(cart=cart, equipment=equipment).exists()
 
 
 

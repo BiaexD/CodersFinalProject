@@ -9,6 +9,10 @@ from django.utils import timezone
 from django.db.models import Sum
 
 
+def get_active_cart(user):
+    return Cart.objects.filter(user=user, is_active=True).first()
+
+
 
 def equipment_list(request):
     equipment = Equipment.objects.all()
@@ -65,28 +69,25 @@ def category_detail(request, category_id):
     return render(request, 'rentals/category_detail.html', context)
 
 
-
+@login_required
 def cart_view(request):
-    cart = request.session.get('cart', {})
+    cart = get_active_cart(request.user)
     items = []
     total_price_per_day = 0
     total_deposit = 0
 
-    for equipment_id, quantity in cart.items():
-        try:
-            equipment = Equipment.objects.get(pk=equipment_id)
-            price = equipment.price_per_day * quantity
-            deposit = equipment.deposit * quantity
+    if cart:
+        for cart_item in cart.cartitem_set.select_related('equipment').all():
+            price = cart_item.equipment.price_per_day * cart_item.quantity
+            deposit = cart_item.equipment.deposit * cart_item.quantity
             total_price_per_day += price
             total_deposit += deposit
             items.append({
-                'equipment': equipment,
-                'quantity': quantity,
+                'equipment': cart_item.equipment,
+                'quantity': cart_item.quantity,
                 'price': price,
                 'deposit': deposit,
             })
-        except Equipment.DoesNotExist:
-            continue
 
     context = {
         'items': items,
@@ -96,9 +97,13 @@ def cart_view(request):
     return render(request, 'cart.html', context)
 
 
-
+@login_required
 def add_to_cart(request, equipment_id):
-    cart = Cart.objects.get(user=request.user, is_active=True)
+    cart = get_active_cart(request.user)
+    if not cart:
+        messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
+        return redirect('select_dates')
+
     equipment = get_object_or_404(Equipment, pk=equipment_id)
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
@@ -106,18 +111,8 @@ def add_to_cart(request, equipment_id):
         defaults={'quantity': 0}
     )
 
-    total_reserved = (
-        CartItem.objects.filter(
-            equipment=equipment,
-            cart__start_date__lte=cart.end_date,
-            cart__end_date__gte=cart.start_date,
-            cart__is_active=True
-        )
-        .exclude(cart=cart)
-        .aggregate(total=Sum('quantity'))['total'] or 0
-    )
-    available = equipment.quantity - total_reserved
-    if cart_item.quantity < available:
+    current_quantity = cart_item.quantity
+    if current_quantity < equipment.quantity:
         cart_item.quantity += 1
         cart_item.save()
         # messages.success(request, f"Dodano {equipment.name} do koszyka")
@@ -129,45 +124,54 @@ def add_to_cart(request, equipment_id):
 
 
 def remove_from_cart(request, equipment_id):
-    cart = request.session.get('cart', {})
-    if str(equipment_id) in cart:
-        del cart[str(equipment_id)]
+    cart = get_active_cart(request.user)
+    if not cart:
+        messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
+        return redirect('select_dates')
 
-    request.session['cart'] = cart
+    cart_item = CartItem.objects.filter(cart=cart, equipment_id=equipment_id).first()
+    if cart_item:
+        cart_item.delete()
+        messages.success(request, f"Usunieto {cart_item.equipment.name} z koszyka.")
     return redirect('cart')
 
 
 
+@login_required
 @require_POST
 def increase_quantity(request, equipment_id):
-    cart = request.session.get('cart', {})
-    equipment_id = str(equipment_id)
-    equipment = get_object_or_404(Equipment, pk=equipment_id)
-    current_quantity = cart.get(str(equipment_id), 0)
+    cart = get_active_cart(request.user)
+    if not cart:
+        messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
+        return redirect('select_dates')
 
-    if current_quantity < equipment.quantity:
-        cart[equipment.pk] = current_quantity + 1
+    cart_item = get_object_or_404(CartItem, cart=cart, equipment_id=equipment_id)
+
+    if cart_item.quantity < cart_item.equipment.quantity:
+        cart_item.quantity += 1
+        cart_item.save()
     else:
-        messages.error(request, f"Nie mamy więcej {equipment.name}...")
-    # if str(equipment_id) in cart:
-    #     cart[equipment_id] += 1
+        messages.error(request, f"Nie mamy więcej {cart_item.equipment.name}...")
 
-    request.session['cart'] = cart
     return redirect('cart')
 
 
-
+@login_required
 @require_POST
 def decrease_quantity(request, equipment_id):
-    cart = request.session.get('cart', {})
-    equipment_id = str(equipment_id)
-    if str(equipment_id) in cart:
-        if cart[equipment_id] > 1:
-            cart[equipment_id] -= 1
-        else:
-            del cart[equipment_id]
+    cart = get_active_cart(request.user)
+    if not cart:
+        messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
+        return redirect('select_dates')
 
-    request.session['cart'] = cart
+    cart_item = get_object_or_404(CartItem, cart=cart, equipment_id=equipment_id)
+    if cart_item.quantity > 1:
+        cart_item.quantity -= 1
+        cart_item.save()
+    else:
+        cart_item.delete()
+        messages.success(request, f"Usunieto {cart_item.equipment.name} z koszyka.")
+
     return redirect('cart')
 
 
@@ -181,13 +185,6 @@ def order_summary(request):
     if request.method == "POST":
         start_date = request.POST.get('start_date')
         end_date = request.POST.get('end_date')
-
-        # if not start_date or not end_date:
-        #     messages.error(request, "Musisz wybrac obie daty!")
-        #     return redirect('select_dates')
-        # if start_date > end_date:
-        #     messages.error(request, "Data konca musi byc pozniej niz poczatek!")
-        #     return redirect('select_dates')
 
         rental = Rental.objects.create(
             user=request.user,
