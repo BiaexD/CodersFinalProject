@@ -4,8 +4,12 @@
     <title>Panel uzytkownika</title>
 </head>
 <body>
-    <p><a href="{% url 'user_rental' %}">Historia wypozyczen</a></p>
-
+    <p><a href="{% url 'user_rentals' %}">Historia wypozyczen</a></p>
+    <p>
+        {% for message in messages %}
+          <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
+        {% endfor %}
+    </p>
     <p><a href="{% url 'home' %}">← Powrót do strony głównej</a></p>
 </body>
 </html>

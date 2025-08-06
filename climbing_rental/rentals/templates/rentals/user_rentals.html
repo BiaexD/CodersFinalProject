@@ -19,6 +19,14 @@
                     <td>{{ rental.start_date|date:"Y-m-d" }}</td>
                     <td>{{ rental.end_date|date:"Y-m-d"  }}</td>
                     <td>{{ rental.status }}</td>
+                    <td>
+                        {% if rental.status != 'finished' %}
+                          <form action="{% url 'finish_rental' rental.id %}" method="post" style="display:inline;">
+                              {% csrf_token %}
+                              <button type="submit">Zakończ wypożyczenie</button>
+                          </form>
+                        {% endif %}
+                    </td>
                 </tr>
             {% endfor %}
         </table>

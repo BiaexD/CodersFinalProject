@@ -277,3 +277,21 @@ def select_dates(request):
         return redirect('home')
 
     return render(request, 'rentals/select_dates.html')
+
+
+
+@login_required
+def finish_rental(request, rental_id):
+    rental = get_object_or_404(Rental, pk=rental_id, user=request.user)
+    if rental.status != 'finished':
+        rental.status = 'finished'
+        rental.save()
+        for item in rental.items.all():
+            equipmnet = item.equipment
+            equipmnet.quantity += item.quantity
+            equipmnet.save()
+        messages.success(request, "Wypozyczenie zostalo zakonczone, ilosc sprzetu w magazynie zostala uzupelniona")
+    else:
+        messages.info(request, "To wypozyczenie zostalo juz zakonczone")
+
+    return redirect('user_panel')

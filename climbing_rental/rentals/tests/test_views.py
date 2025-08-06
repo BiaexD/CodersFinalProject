@@ -378,3 +378,48 @@ def test_order_summary_view(client, django_user_model):
 
     cart.refresh_from_db()
     assert cart.is_active is False
+
+
+
+@pytest.mark.django_db
+def test_finish_rental_view(client):
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+    category = Category.objects.create(name="Skaly")
+    equipment = Equipment.objects.create(
+        name="Ekspres",
+        category=category,
+        description="Ekspres 15 cm firmy Simond",
+        quantity=5,
+        price_per_day=2.0,
+        deposit=30.0,
+    )
+
+    rental = Rental.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-15",
+        status="pending",
+    )
+
+    RentalItem.objects.create(
+        rental=rental,
+        equipment=equipment,
+        quantity=2
+    )
+
+    equipment.quantity -= 2
+    equipment.save()
+
+    url = reverse('finish_rental', args=[equipment.pk])
+    response = client.get(url)
+    assert response.status_code == 302
+
+    rental.refresh_from_db()
+    assert rental.status == "finished"
+
+    equipment.refresh_from_db()
+    assert equipment.quantity == 5
+
+    messages = list(response.wsgi_request._messages)
+    assert any("zostalo zakonczone" in str(m) for m in messages)
