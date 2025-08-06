@@ -1,37 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Moje wypożyczenia</title>
+    <title>Panel uzytkownika</title>
 </head>
 <body>
-    <h1>Moje wypożyczenia</h1>
-
-    {% if rentals %}
-        <table border="1">
-            <tr>
-                <th>Data zamówienia</th>
-                <th>Okres wypożyczenia</th>
-                <th>Status</th>
-                <th>Sprzęt</th>
-            </tr>
-            {% for rental in rentals %}
-            <tr>
-                <td>{{ rental.created_at|date:"Y-m-d H:i" }}</td>
-                <td>{{ rental.start_date }} – {{ rental.end_date }}</td>
-                <td>{{ rental.get_status_display }}</td>
-                <td>
-                    <ul>
-                        {% for item in rental.items.all %}
-                            <li>{{ item.equipment.name }} × {{ item.quantity }}</li>
-                        {% endfor %}
-                    </ul>
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    {% else %}
-        <p>Nie masz jeszcze żadnych wypożyczeń.</p>
-    {% endif %}
+    <p><a href="{% url 'user_rental' %}">Historia wypozyczen</a></p>
 
     <p><a href="{% url 'home' %}">← Powrót do strony głównej</a></p>
 </body>

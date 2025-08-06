@@ -32,4 +32,5 @@ urlpatterns = [
     path('user-panel/', views.user_panel, name='user_panel'),
     path('order_complete/', views.order_complete, name='order_complete'),
     path('select-dates/', views.select_dates, name='select_dates'),
+    path('my_rentals/', views.user_rentals, name='user_rentals'),
 ]

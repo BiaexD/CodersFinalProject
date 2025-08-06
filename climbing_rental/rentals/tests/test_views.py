@@ -2,7 +2,7 @@ import pytest
 from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rentals.models import Category, Equipment, Cart, CartItem
+from rentals.models import Category, Equipment, Cart, CartItem, Rental, RentalItem
 
 
 
@@ -97,8 +97,8 @@ def test_home_view(client):
     url = reverse('home')
     response = client.get(url)
     assert response.status_code == 200
-
     content = response.content.decode()
+
     assert "Zima" in content
     assert "Skaly" in content
     assert "Via ferrata" in content
@@ -189,10 +189,8 @@ def test_add_to_cart_view(client):
 
     response = client.post(url)
     assert response.status_code == 302
-
     cart_item.refresh_from_db()
     assert cart_item.quantity == 5
-
     messages = list(response.wsgi_request._messages)
     assert any("nie mozna dodac wiecej" in str(m).lower() for m in messages)
 
@@ -323,5 +321,60 @@ def test_select_dates_desactivates_previous_cart(client):
     new_cart = Cart.objects.get(user=user, is_active=True)
     assert str(new_cart.start_date) == "2025-09-01"
     assert str(new_cart.end_date) == "2025-09-05"
-
     assert response.status_code == 302
+
+
+
+def test_user_rentals_view(client, django_user_model):
+    user = django_user_model.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+    Rental.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-15",
+        status="pending",
+    )
+
+    url = reverse('user_rentals')
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "2025-08-01" in response.content.decode()
+
+
+
+def test_order_summary_view(client, django_user_model):
+    user = django_user_model.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+    category = Category.objects.create(name="Skaly")
+    equipment = Equipment.objects.create(
+        name="Ekspres",
+        category=category,
+        description="Ekspres 15 cm firmy Simond",
+        quantity=5,
+        price_per_day=2.0,
+        deposit=30.0,
+    )
+
+    cart = Cart.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-15",
+        is_active=True,
+    )
+
+    CartItem.objects.create(
+        cart=cart,
+        equipment=equipment,
+        quantity=2
+    )
+
+    url = reverse('order_summary')
+    response = client.get(url)
+    assert response.status_code == 200
+    assert "Ekspres" in response.content.decode()
+
+    response = client.post(url)
+    assert response.status_code == 302
+
+    cart.refresh_from_db()
+    assert cart.is_active is False

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Moje wypożyczenia</title>
+</head>
+<body>
+    <h1>Moje wypożyczenia</h1>
+    {% if rentals %}
+        <table border="1">
+            <tr>
+                <th>ID zamówienia</th>
+                <th>Data od</th>
+                <th>Data do</th>
+                <th>Status</th>
+            </tr>
+            {% for rental in rentals %}
+                <tr>
+                    <td>{{ rental.id }}</td>
+                    <td>{{ rental.start_date|date:"Y-m-d" }}</td>
+                    <td>{{ rental.end_date|date:"Y-m-d"  }}</td>
+                    <td>{{ rental.status }}</td>
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <p>Nie masz żadnych wypożyczeń.</p>
+    {% endif %}
+    <p><a href="{% url 'home' %}">← Strona główna</a></p>
+</body>
+</html>
