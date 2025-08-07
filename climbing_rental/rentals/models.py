@@ -1,5 +1,6 @@
 from django.db import models
 from django.conf import settings
+from django.contrib.auth.models import User
 
 
 
@@ -71,3 +72,13 @@ class CartItem(models.Model):
 
     def __str__(self):
         return f"{self.equipment.name} x {self.quantity}"
+
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    membership_number = models.CharField(max_length=20, verbose_name="Numer legitymacji KW Poznan", blank=True)
+    phone_number = models.CharField(max_length=20, verbose_name="Numer kontaktory")
+
+    def __str__(self):
+        return f"Profil {self.user.username}"

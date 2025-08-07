@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Moje dane</title>
+</head>
+<body>
+    <h1>Moje dane</h1>
+    <ul>
+        <li><strong>Imię:</strong> {{ user.first_name }}</li>
+        <li><strong>Nazwisko:</strong> {{ user.last_name }}</li>
+        <li><strong>Adres e-mail:</strong> {{ user.email }}</li>
+        <li><strong>Numer legitymacji KW Poznań:</strong> {{ profile.membership_number }}</li>
+        <li><strong>Telefon kontaktowy:</strong> {{ profile.phone_number }}</li>
+    </ul>
+    <a href="{% url 'user_edit_data' %}"><button>Edytuj</button></a>
+    <br>
+    <a href="{% url 'user_panel' %}">← Powrót do panelu użytkownika</a>
+</body>
+</html>

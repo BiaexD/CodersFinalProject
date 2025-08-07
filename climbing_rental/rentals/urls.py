@@ -35,4 +35,7 @@ urlpatterns = [
     path('my_rentals/', views.user_rentals, name='user_rentals'),
     path('my_rentals/<int:rental_id>/finish/', views.finish_rental, name='finish_rental'),
     path('my_rentals/<int:rental_id>/', views.rental_detail, name='rental_detail'),
+    path('user-panel/user-data', views.user_data, name='user_data'),
+    path('user-panel/user-edit-data/', views.user_edit_data, name='user_edit_data'),
+
 ]

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Edytuj dane</title>
+</head>
+<body>
+    <h1>Edycja danych</h1>
+    <form method="post">
+        {% csrf_token %}
+        <fieldset>
+            <legend>Twoje dane</legend>
+            {{ user_form.as_p }}
+            {{ profile_form.as_p }}
+        </fieldset>
+        <button type="submit">Zapisz</button>
+    </form>
+    <br>
+    <a href="{% url 'user_data' %}">← Anuluj i wróć do widoku danych</a>
+</body>
+</html>

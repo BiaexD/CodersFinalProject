@@ -2,8 +2,7 @@ import pytest
 from django.db.models import Sum
 from django.contrib.auth.models import User
 from django.urls import reverse
-from rentals.models import Category, Equipment, Cart, CartItem, Rental, RentalItem
-
+from rentals.models import Category, Equipment, Cart, CartItem, Rental, RentalItem, UserProfile
 
 
 @pytest.mark.django_db
@@ -459,3 +458,59 @@ def test_rental_detail_view(client):
     assert "Ekspres" in content
     assert "2025-08-01" in content
     assert "ilosc: 2" in content
+
+
+
+@pytest.mark.django_db
+def test_user_data_view(client):
+    user = User.objects.create_user(username='testuser', password='passwordtest', first_name='Jan', last_name='Kowalski', email='jan@kowalski.pl')
+    UserProfile.objects.create(user=user, membership_number='9999', phone_number='123456789')
+    client.login(username='testuser', password='passwordtest')
+
+    url = reverse('user_data')
+    response = client.get(url)
+    assert response.status_code == 200
+
+    content = response.content.decode()
+    assert "Jan" in content
+    assert "Kowalski" in content
+    assert "jan@kowalski.pl" in content
+    assert "9999" in content
+    assert "123456789" in content
+    assert "Edytuj" in content
+
+
+
+@pytest.mark.django_db
+def test_user_edit_data_view(client):
+    user = User.objects.create_user(username='testuser', password='passwordtest', first_name='Jan', last_name='Kowalski', email='jan@kowalski.pl')
+    UserProfile.objects.create(user=user, membership_number='9999', phone_number='123456789')
+    client.login(username='testuser', password='passwordtest')
+
+    new_data = {
+        'first_name': 'Adam',
+        'last_name': 'Nowak',
+        'email': 'adam@nowak.pl',
+        'membership_number': '0000',
+        'phone_number': '987654321',
+    }
+
+    url = reverse('user_edit_data')
+    response = client.post(url, {
+        'first_name': new_data['first_name'],
+        'last_name': new_data['last_name'],
+        'email': new_data['email'],
+        'membership_number': new_data['membership_number'],
+        'phone_number': new_data['phone_number'],
+    })
+
+    assert response.status_code == 302
+
+    user.refresh_from_db()
+    profile = UserProfile.objects.get(user=user)
+
+    assert user.first_name == 'Adam'
+    assert user.last_name == 'Nowak'
+    assert user.email == 'adam@nowak.pl'
+    assert profile.membership_number == '0000'
+    assert profile.phone_number == '987654321'

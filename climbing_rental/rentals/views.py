@@ -1,6 +1,7 @@
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
-from .models import Equipment, Category, Rental, RentalItem, Cart, CartItem
+from .models import Equipment, Category, Rental, RentalItem, Cart, CartItem, UserProfile
+from .forms import UserEditForm, UserProfileForm
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -308,3 +309,34 @@ def rental_detail(request, rental_id):
         'items': items,
     }
     return render(request, 'rentals/rental_detail.html', context)
+
+
+
+@login_required
+def user_data(request):
+    user_profile, create = UserProfile.objects.get_or_create(user=request.user)
+    return render(request, 'rentals/user_data.html', {
+        'user': request.user,
+        'profile': user_profile,
+    })
+
+
+
+@login_required
+def user_edit_data(request):
+    user_profile, create = UserProfile.objects.get_or_create(user=request.user)
+    if request.method == "POST":
+        user_form = UserEditForm(request.POST, instance=request.user)
+        profile_form = UserProfileForm(request.POST, instance=user_profile)
+        if user_form.is_valid() and profile_form.is_valid():
+            user_form.save()
+            profile_form.save()
+            return redirect('user_data')
+    else:
+        user_form = UserEditForm(instance=request.user)
+        profile_form = UserProfileForm(instance=user_profile)
+
+    return render(request, 'rentals/user_edit_data.html', {
+        'user_form': user_form,
+        'profile_form': profile_form,
+    })
