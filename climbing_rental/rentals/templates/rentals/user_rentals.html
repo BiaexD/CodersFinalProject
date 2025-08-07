@@ -19,6 +19,7 @@
                     <td>{{ rental.start_date|date:"Y-m-d" }}</td>
                     <td>{{ rental.end_date|date:"Y-m-d"  }}</td>
                     <td>{{ rental.status }}</td>
+                    <td><a href="{% url 'rental_detail' rental.id %}">Szczegóły</a></td>
                     <td>
                         {% if rental.status != 'finished' %}
                           <form action="{% url 'finish_rental' rental.id %}" method="post" style="display:inline;">

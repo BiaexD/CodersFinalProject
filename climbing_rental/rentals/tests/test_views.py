@@ -423,3 +423,39 @@ def test_finish_rental_view(client):
 
     messages = list(response.wsgi_request._messages)
     assert any("zostalo zakonczone" in str(m) for m in messages)
+
+
+
+@pytest.mark.django_db
+def test_rental_detail_view(client):
+    user = User.objects.create_user(username='testuser', password='passwordtest')
+    client.login(username='testuser', password='passwordtest')
+    category = Category.objects.create(name="Skaly")
+    equipment = Equipment.objects.create(
+        name="Ekspres",
+        category=category,
+        description="Ekspres 15 cm firmy Simond",
+        quantity=5,
+        price_per_day=2.0,
+        deposit=30.0,
+    )
+    rental = Rental.objects.create(
+        user=user,
+        start_date="2025-08-01",
+        end_date="2025-08-15",
+        status="pending",
+    )
+    RentalItem.objects.create(
+        rental=rental,
+        equipment=equipment,
+        quantity=2
+    )
+
+    url = reverse('rental_detail', args=[rental.pk])
+    response = client.get(url)
+
+    assert response.status_code == 200
+    content = response.content.decode()
+    assert "Ekspres" in content
+    assert "2025-08-01" in content
+    assert "ilosc: 2" in content

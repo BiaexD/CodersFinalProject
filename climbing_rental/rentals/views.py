@@ -295,3 +295,16 @@ def finish_rental(request, rental_id):
         messages.info(request, "To wypozyczenie zostalo juz zakonczone")
 
     return redirect('user_panel')
+
+
+
+@login_required
+def rental_detail(request, rental_id):
+    rental = get_object_or_404(Rental, pk=rental_id, user=request.user)
+    items = rental.items.all()
+
+    context = {
+        'rental': rental,
+        'items': items,
+    }
+    return render(request, 'rentals/rental_detail.html', context)

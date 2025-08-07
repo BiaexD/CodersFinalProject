@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Szczegóły zamówienia</title>
+</head>
+<body>
+    <h1>Szczegóły zamówienia nr {{ rental.id }}</h1>
+    <p><strong>Daty wypożyczenia:</strong> {{ rental.start_date|date:"Y-m-d" }} - {{ rental.end_date|date:"Y-m-d" }}</p>
+    <p><strong>Status:</strong> {{ rental.get_status_display }}</p>
+
+    <h2>Wypożyczony sprzęt:</h2>
+    <ul>
+        {% for item in items %}
+            <li>
+                {{ item.equipment.name }} – ilosc: {{ item.quantity }}
+            </li>
+        {% empty %}
+            <li>Brak sprzętu w tym zamówieniu.</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{% url 'user_panel' %}">← Powrót do panelu użytkownika</a>
+</body>
+</html>

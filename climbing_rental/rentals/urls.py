@@ -34,4 +34,5 @@ urlpatterns = [
     path('select-dates/', views.select_dates, name='select_dates'),
     path('my_rentals/', views.user_rentals, name='user_rentals'),
     path('my_rentals/<int:rental_id>/finish/', views.finish_rental, name='finish_rental'),
+    path('my_rentals/<int:rental_id>/', views.rental_detail, name='rental_detail'),
 ]
