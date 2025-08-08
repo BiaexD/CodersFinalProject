@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+    <h1>Wybierz kategorie</h1>
+    <a href="{% url 'cart' %}">Koszyk ({{ cart_count }})</a>
+        <ul>
+          {% for category in categories %}
+            <li>
+              <a href="{% url 'category_detail' category.id %}">{{ category.name }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+    <p><a href="{% url 'user_panel' %}">← Powrót do panelu</a></p>
+</body>
+</html>

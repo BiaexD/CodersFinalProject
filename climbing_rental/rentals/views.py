@@ -70,6 +70,7 @@ def category_detail(request, category_id):
     return render(request, 'rentals/category_detail.html', context)
 
 
+
 @login_required
 def cart_view(request):
     cart = get_active_cart(request.user)
@@ -96,6 +97,7 @@ def cart_view(request):
         'total_deposit': total_deposit,
     }
     return render(request, 'cart.html', context)
+
 
 
 @login_required
@@ -157,6 +159,7 @@ def increase_quantity(request, equipment_id):
     return redirect('cart')
 
 
+
 @login_required
 @require_POST
 def decrease_quantity(request, equipment_id):
@@ -175,6 +178,18 @@ def decrease_quantity(request, equipment_id):
 
     return redirect('cart')
 
+
+
+@login_required
+def order_categories(request):
+    cart = get_active_cart(request.user)
+    if not cart:
+        messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
+        return redirect('select_dates')
+
+    categories = Category.objects.all().order_by('name')
+
+    return render(request, 'rentals/order_categories.html', {'categories': categories})
 
 
 @login_required
@@ -275,7 +290,7 @@ def select_dates(request):
             end_date=end_date,
             is_active=True
         )
-        return redirect('home')
+        return redirect('order_categories')
 
     return render(request, 'rentals/select_dates.html')
 

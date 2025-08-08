@@ -19,15 +19,5 @@
         <a href="{% url 'login' %}">Zaloguj</a>
         <p>Nie masz konta? <a href="{% url 'register' %}">Zarejestruj się</a></p>
     {% endif %}
-    <br>
-    <br>
-    <a href="{% url 'cart' %}">🛒 Koszyk ({{ cart_count }})</a>
-        <ul>
-          {% for category in categories %}
-            <li>
-              <a href="{% url 'category_detail' category.id %}">{{ category.name }}</a>
-            </li>
-          {% endfor %}
-        </ul>
 </body>
 </html>
