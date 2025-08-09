@@ -18,6 +18,7 @@ class Equipment(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
     description = models.TextField(blank=True)
     quantity = models.PositiveIntegerField()
+    total_quantity = models.PositiveIntegerField(default=0)
     price_per_day = models.DecimalField(max_digits=5, decimal_places=2)
     deposit = models.DecimalField(max_digits=5, decimal_places=2)
 

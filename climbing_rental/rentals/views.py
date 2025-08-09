@@ -1,3 +1,6 @@
+from decimal import Decimal
+from urllib import request
+
 from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Equipment, Category, Rental, RentalItem, Cart, CartItem, UserProfile
@@ -36,31 +39,18 @@ def home(request):
 
 def category_detail(request, category_id):
     category = get_object_or_404(Category, pk=category_id)
-    try:
-        cart = Cart.objects.get(user=request.user, is_active=True)
-    except Cart.DoesNotExist:
+    cart = get_active_cart(request.user)
+    if not cart:
+        messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
         return redirect('select_dates')
-
-    start_date = cart.start_date
-    end_date = cart.end_date
 
     available_equipment = []
     for equipment in Equipment.objects.filter(category=category):
-        already_reserved = (
-            CartItem.objects.filter(
-                equipment=equipment,
-                cart__start_date__lte=end_date,
-                cart__end_date__gte=start_date,
-                cart__is_active=True
-            )
-            .aggregate(total=Sum('quantity'))['total'] or 0
-        )
-
-        left = equipment.quantity - already_reserved
-        if left > 0:
+        free = available_on_dates(equipment, request.user)
+        if free > 0:
             available_equipment.append({
                 'equipment': equipment,
-                'available': left,
+                'available': free,
             })
     context = {
         'category': category,
@@ -76,8 +66,8 @@ def category_detail(request, category_id):
 def cart_view(request):
     cart = get_active_cart(request.user)
     items = []
-    total_price_per_day = 0
-    total_deposit = 0
+    total_price_per_day = Decimal('0.00')
+    total_deposit = Decimal('0.00')
 
     if cart:
         for cart_item in cart.cartitem_set.select_related('equipment').all():
@@ -102,6 +92,7 @@ def cart_view(request):
 
 
 @login_required
+@require_POST
 def add_to_cart(request, equipment_id):
     cart = get_active_cart(request.user)
     if not cart:
@@ -109,24 +100,25 @@ def add_to_cart(request, equipment_id):
         return redirect('select_dates')
 
     equipment = get_object_or_404(Equipment, pk=equipment_id)
+    free_to_add = available_on_dates(equipment, request.user)
+    if free_to_add < 1:
+        messages.error(request, f"Nie mozna dodac wiecej {equipment.name} w wybranym terminie")
+        return redirect(request.META.get('HTTP_REFERER', 'home'))
+
     cart_item, created = CartItem.objects.get_or_create(
         cart=cart,
         equipment=equipment,
         defaults={'quantity': 0}
     )
 
-    current_quantity = cart_item.quantity
-    if current_quantity < equipment.quantity:
-        cart_item.quantity += 1
-        cart_item.save()
-        # messages.success(request, f"Dodano {equipment.name} do koszyka")
-    else:
-        messages.error(request, f"Nie mozna dodac wiecej {equipment.name} w wybranym terminie")
+    cart_item.quantity += 1
+    cart_item.save()
 
     return redirect(request.META.get('HTTP_REFERER', 'home'))
 
 
-
+@login_required
+@require_POST
 def remove_from_cart(request, equipment_id):
     cart = get_active_cart(request.user)
     if not cart:
@@ -151,11 +143,13 @@ def increase_quantity(request, equipment_id):
 
     cart_item = get_object_or_404(CartItem, cart=cart, equipment_id=equipment_id)
 
-    if cart_item.quantity < cart_item.equipment.quantity:
-        cart_item.quantity += 1
-        cart_item.save()
-    else:
+    free_to_add = available_on_dates(cart_item.equipment, request.user)
+    if free_to_add < 1:
         messages.error(request, f"Nie mamy więcej {cart_item.equipment.name}...")
+        return redirect('cart')
+
+    cart_item.quantity += 1
+    cart_item.save()
 
     return redirect('cart')
 
@@ -193,6 +187,36 @@ def order_categories(request):
     return render(request, 'rentals/order_categories.html', {'categories': categories})
 
 
+
+def available_on_dates(equipment, user):
+    cart = get_active_cart(user)
+    if not cart:
+        return 0
+
+    start = cart.start_date
+    end = cart.end_date
+
+    reserved_from_rentals = (
+        RentalItem.objects.filter(
+            equipment=equipment,
+            rental__status__in=['pending', 'active'],
+            rental__start_date__lte=end,
+            rental__end_date__gte=start,
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+    )
+
+    in_my_cart_now = (
+        CartItem.objects.filter(
+            cart=cart,
+            equipment=equipment,
+        ).aggregate(total=Sum('quantity'))['total'] or 0
+    )
+
+    free = equipment.total_quantity - reserved_from_rentals - in_my_cart_now
+    return max(0, free)
+
+
+
 @login_required
 def order_summary(request):
     try:
@@ -207,20 +231,43 @@ def order_summary(request):
         with transaction.atomic():
             for item in items:
                 equipment = item.equipment
-                reserved = (
+                reserved_from_rentals = (
+                    RentalItem.objects.filter(
+                        equipment=equipment,
+                        rental__status__in=['pending', 'active'],
+                        rental__start_date__lte=cart.end_date,
+                        rental__end_date__gt=cart.start_date,
+                    ).aggregate(total=Sum('quantity'))['total'] or 0
+                )
+
+                in_other_carts = (
                     CartItem.objects.filter(
                         equipment=equipment,
                         cart__is_active=True,
                         cart__start_date__lte=cart.end_date,
-                        cart__end_date__gt=cart.start_date,
-                    )
-                    .exclude(cart=cart)
-                    .aggregate(total=Sum('quantity'))['total'] or 0
+                        cart__end_date__gte=cart.start_date,
+                    ).exclude(cart=cart)
+                     .aggregate(total=Sum('quantity'))['total'] or 0
                 )
-                available = equipment.quantity - reserved
-                if item.quantity > available:
+
+                available_now = equipment.total_quantity - reserved_from_rentals - in_other_carts
+                if item.quantity > available_now:
                     messages.error(request, f"Nie mamy wiecej {equipment.name}...")
                     return redirect('cart')
+
+            rental = Rental.objects.create(
+                user=request.user,
+                start_date=cart.start_date,
+                end_date=cart.end_date,
+                status='pending' or 'active',
+            )
+
+            for item in items:
+                RentalItem.objects.create(
+                    rental=rental,
+                    equipment=item.equipment,
+                    quantity=item.quantity,
+                )
 
             for item in items:
                 equipment = item.equipment
@@ -237,7 +284,7 @@ def order_summary(request):
     return render(request, 'rentals/order_summary.html', {'cart': cart, 'items': items})
 
 
-
+@login_required
 def order_complete(request):
     return render(request, 'rentals/order_complete.html')
 
@@ -325,10 +372,6 @@ def finish_rental(request, rental_id):
     if rental.status != 'finished':
         rental.status = 'finished'
         rental.save()
-        for item in rental.items.all():
-            equipmnet = item.equipment
-            equipmnet.quantity += item.quantity
-            equipmnet.save()
         messages.success(request, "Wypozyczenie zostalo zakonczone, ilosc sprzetu w magazynie zostala uzupelniona")
     else:
         messages.info(request, "To wypozyczenie zostalo juz zakonczone")

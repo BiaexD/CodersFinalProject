@@ -24,7 +24,7 @@
                         {% if rental.status != 'finished' %}
                           <form action="{% url 'finish_rental' rental.id %}" method="post" style="display:inline;">
                               {% csrf_token %}
-                              <button type="submit">Zakończ wypożyczenie</button>
+                              <button type="submit">Zrezygnuj z wypozyczenia</button>
                           </form>
                         {% endif %}
                     </td>
