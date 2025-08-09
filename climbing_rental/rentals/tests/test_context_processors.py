@@ -1,5 +1,6 @@
 import pytest
 from django.urls import reverse
+from datetime import date
 from django.contrib.auth.models import User
 from rentals.models import Category, Equipment, Cart, CartItem
 
@@ -28,8 +29,8 @@ def test_cart_context_processor(client):
 
     cart = Cart.objects.create(
         user=user,
-        start_date="2025-08-01",
-        end_date="2025-08-10",
+        start_date=date(2025, 8, 1),
+        end_date=date(2025, 8, 10),
         is_active=True,
     )
 
@@ -44,6 +45,12 @@ def test_cart_context_processor(client):
         quantity=2
     )
 
-    response = client.get(reverse('home'))
+    response = client.get(reverse('order_categories'))
     assert response.status_code == 200
-    assert "Koszyk (2)" in response.content.decode()
+
+    ctx = response.context
+    assert ctx['cart_count'] == 2
+    assert ctx['has_active_cart'] is True
+    assert ctx ['rental_period']['start_date'] == date(2025, 8, 1)
+    assert ctx ['rental_period']['end_date'] == date(2025, 8, 10)
+    assert 'Koszyk (2)' in response.content.decode()

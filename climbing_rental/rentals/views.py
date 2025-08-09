@@ -2,6 +2,7 @@ from django.db import transaction
 from django.shortcuts import render, redirect, get_object_or_404
 from .models import Equipment, Category, Rental, RentalItem, Cart, CartItem, UserProfile
 from .forms import UserEditForm, UserProfileForm
+from datetime import date
 from django.views.decorators.http import require_POST, require_http_methods
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -271,20 +272,40 @@ def user_panel(request):
 
 @login_required
 def select_dates(request):
-    if request.method == "POST":
-        start_date = request.POST.get("start_date")
-        end_date = request.POST.get("end_date")
+    today = date.today()
+    is_edit_mode = request.GET.get('edit') == '1'
 
-        if not start_date or not end_date:
-            messages.error(request, "Musisz wybrac obie daty!")
-            return redirect('select_dates')
+    if request.method == 'GET' and not is_edit_mode:
+        if Cart.objects.filter(user=request.user, is_active=True).exists():
+            return redirect('order_categories')
+
+    if request.method == "POST":
+        start_date_str = request.POST.get("start_date")
+        end_date_str = request.POST.get("end_date")
+
+        def render_with_error(msg):
+            messages.error(request, msg)
+            return render(
+                request,
+                'rentals/select_dates.html', {
+                    'today': today.isoformat(),
+                    'start_value': start_date_str or '',
+                    'end_value': end_date_str or '',
+                }
+            )
+
+        if not start_date_str or not end_date_str:
+            return render_with_error("Musisz wybrac obie daty!")
+        start_date = date.fromisoformat(start_date_str)
+        end_date = date.fromisoformat(end_date_str)
+
         if start_date > end_date:
-            messages.error(request, "Data konca musi byc pozniej niz poczatek!")
-            return redirect('select_dates')
+            return render_with_error("Data konca musi byc pozniej niz poczatek!")
+        if start_date < today or end_date < today:
+            return render_with_error("Wybrales date z przeszlosci")
 
         Cart.objects.filter(user=request.user, is_active=True).update(is_active=False)
-
-        cart = Cart.objects.create(
+        Cart.objects.create(
             user=request.user,
             start_date=start_date,
             end_date=end_date,
@@ -292,7 +313,9 @@ def select_dates(request):
         )
         return redirect('order_categories')
 
-    return render(request, 'rentals/select_dates.html')
+    return render(request, 'rentals/select_dates.html', {
+        'today': today.isoformat(),
+    })
 
 
 

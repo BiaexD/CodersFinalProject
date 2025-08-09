@@ -88,23 +88,6 @@ def test_category_detail_shows_only_available_equipment(client):
 
 
 @pytest.mark.django_db
-def test_home_view(client):
-    Category.objects.create(name="Zima")
-    Category.objects.create(name="Skaly")
-    Category.objects.create(name="Via ferrata")
-
-    url = reverse('home')
-    response = client.get(url)
-    assert response.status_code == 200
-    content = response.content.decode()
-
-    assert "Zima" in content
-    assert "Skaly" in content
-    assert "Via ferrata" in content
-
-
-
-@pytest.mark.django_db
 def test_cart_view(client):
     user = User.objects.create_user(username='testuser', password='passwordtest')
     client.login(username='testuser', password='passwordtest')

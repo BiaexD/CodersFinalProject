@@ -5,6 +5,7 @@
     <title>{{ category.name }}</title>
 </head>
 <body>
+    {% include "rentals/_rental_period_bar.html" %}
     <h1>Sprzęt w kategorii: {{ category.name }}</h1>
     <a href="{% url 'cart' %}">Koszyk ({{ cart_count }})</a>
     <ul>

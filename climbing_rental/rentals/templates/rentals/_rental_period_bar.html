@@ -1,0 +1,8 @@
+{% if has_active_cart and rental_period %}
+<div style="background:#f5f5f5; padding:8px; margin-bottom:12px; border:1px solid #ddd;">
+  <strong>Termin wypozyczenia:</strong>
+  {{ rental_period.start_date }} — {{ rental_period.end_date }}
+  &nbsp; | &nbsp;
+  <a href="{% url 'select_dates' %}?edit=1">Edytuj</a>
+</div>
+{% endif %}
