@@ -1,0 +1,29 @@
+<header class="kw-nav" role="navigation" aria-label="Główna nawigacja">
+  <div class="kw-nav__inner">
+    <a href="/" class="kw-nav__brand">
+      <span class="kw-nav__logo">KW</span>
+      <span class="kw-nav__title">Klub Wysokogórski</span>
+    </a>
+
+    <nav class="kw-nav__menu" aria-label="Menu główne">
+      <div class="kw-nav__item {% block nav_start %}{% endblock %}">
+            <a href="{% url 'home' %}">Strona główna</a>
+      </div>
+
+        {% if user.is_authenticated %}
+
+      <div class="kw-nav__item has-dropdown {% block nav_klub %}{% endblock %}">
+            <a href="{% url 'equipment_list' %}">Podgląd sprzętu</a>
+      </div>
+      <div class="kw-nav__item {% block nav_dzialalnosc %}{% endblock %}">
+          <a href="{% url 'select_dates' %}">Wypożycz sprzęt</a>
+      </div>
+      <div class="kw-nav__item {% block nav_scianka %}{% endblock %}"><a href="#">Ścianka</a></div>
+      <div class="kw-nav__item {% block nav_szkola %}{% endblock %}"><a href="#">Szkoła wspinania</a></div>
+      <div class="kw-nav__item {% block nav_kontakt %}{% endblock %}"><a href="#">Kontakt</a></div>
+
+        {% endif %}
+
+    </nav>
+  </div>
+</header>

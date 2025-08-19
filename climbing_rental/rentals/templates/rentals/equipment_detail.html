@@ -1,20 +1,52 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Szczegóły sprzętu</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
 
-<h1>{{ equipment.name }}</h1>
+{% block title %}{{ equipment.name }} – Szczegóły{% endblock %}
 
-<p><strong>Kategoria:</strong> {{ equipment.category.name }}</p>
-<p><strong>Opis:</strong> {{ equipment.description }}</p>
-<p><strong>Dostępna ilość:</strong> {{ equipment.quantity }}</p>
-<p><strong>Cena za dzień:</strong> {{ equipment.price_per_day }} zł</p>
-<p><strong>Kaucja:</strong> {{ equipment.deposit }} zł</p>
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
 
-<p><a href="{% url 'equipment_list' %}">← Powrót do listy sprzętu</a></p>
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
 
-</body>
-</html>
+    {# PRAWA KOLUMNA – szczegóły wybranego sprzętu #}
+    <main>
+      <h1>{{ equipment.name }}</h1>
+
+      <div class="card" style="padding:20px; margin-top:12px;">
+        <div style="display:grid; grid-template-columns: 180px 1fr; gap:10px;">
+          <div class="muted">Kategoria</div>
+          <div>{{ equipment.category.name }}</div>
+
+          <div class="muted">Opis</div>
+          <div>{{ equipment.description|default:'—' }}</div>
+
+          <div class="muted">Dostępna ilość</div>
+          <div>{{ equipment.total_quantity }}</div>
+
+          <div class="muted">Cena za dzień</div>
+          <div>{{ equipment.price_per_day }} zł</div>
+
+          <div class="muted">Kaucja</div>
+          <div>{{ equipment.deposit }} zł</div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:10px; flex-wrap:wrap;">
+          <a class="btn btn--ghost" href="{% url 'equipment_list' %}">
+            ← Wróć do listy
+          </a>
+        </div>
+      </div>
+    </main>
+  </div>
+{% endblock %}

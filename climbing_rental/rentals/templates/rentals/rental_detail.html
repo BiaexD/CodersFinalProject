@@ -1,24 +1,70 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Szczegóły zamówienia</title>
-</head>
-<body>
-    <h1>Szczegóły zamówienia nr {{ rental.id }}</h1>
-    <p><strong>Daty wypożyczenia:</strong> {{ rental.start_date|date:"Y-m-d" }} - {{ rental.end_date|date:"Y-m-d" }}</p>
-    <p><strong>Status:</strong> {{ rental.get_status_display }}</p>
+{% extends 'base.html' %}
+{% load static %}
 
-    <h2>Wypożyczony sprzęt:</h2>
-    <ul>
-        {% for item in items %}
-            <li>
-                {{ item.equipment.name }} – ilosc: {{ item.quantity }}
-            </li>
-        {% empty %}
-            <li>Brak sprzętu w tym zamówieniu.</li>
-        {% endfor %}
-    </ul>
+{% block title %}Szczegóły zamówienia #{{ rental.id }}{% endblock %}
 
-    <a href="{% url 'user_rentals' %}">← Powrót do moich wypozyczen</a>
-</body>
-</html>
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna: panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna: szczegóły zamówienia -->
+    <main>
+      <div class="card" style="padding:20px;">
+        <h1>Szczegóły zamówienia nr {{ rental.id }}</h1>
+
+        <p><strong>Daty wypożyczenia:</strong> {{ rental.start_date|date:"Y-m-d" }} – {{ rental.end_date|date:"Y-m-d" }}</p>
+        <p><strong>Ilość dni:</strong> {{ rental.days_count }}</p>
+        <p><strong>Status:</strong> {{ rental.get_status_display }}</p>
+
+        <h2 style="margin-top:20px;">Wypożyczony sprzęt:</h2>
+
+        {% if items %}
+          <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+            <thead>
+              <tr>
+                <td style="text-align:left;">Nazwa</td>
+                <td>Ilość</td>
+                <td>Cena/doba</td>
+                <td>Kaucja</td>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+                <tr>
+                  <td>{{ item.equipment.name }}</td>
+                  <td>{{ item.quantity }}</td>
+                  <td>{{ item.equipment.price_per_day }} zł</td>
+                  <td>{{ item.equipment.deposit }} zł</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <div style="margin-top:16px;">
+            <p><strong>Razem za cały okres:</strong> {{ total_price_total }} zł</p>
+            <p><strong>Razem kaucji:</strong> {{ total_deposit }} zł</p>
+          </div>
+        {% else %}
+          <p>Brak sprzętu w tym zamówieniu.</p>
+        {% endif %}
+
+        <div style="margin-top:20px;">
+          <a href="{% url 'user_rentals' %}" class="btn btn--ghost">← Powrót do moich wypożyczeń</a>
+        </div>
+      </div>
+    </main>
+  </div>
+{% endblock %}
+

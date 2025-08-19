@@ -1,20 +1,44 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Edytuj dane</title>
-</head>
-<body>
-    <h1>Edycja danych</h1>
-    <form method="post">
-        {% csrf_token %}
-        <fieldset>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Edytuj dane{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna: panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna: formularz edycji -->
+    <main>
+      <h1 style="margin-bottom:16px;">Edycja danych</h1>
+
+      <div class="card" style="padding:20px;">
+        <form method="post">
+          {% csrf_token %}
+          <fieldset style="border:1px solid #ddd; padding:15px; border-radius:8px;">
             <legend>Twoje dane</legend>
             {{ user_form.as_p }}
             {{ profile_form.as_p }}
-        </fieldset>
-        <button type="submit">Zapisz</button>
-    </form>
-    <br>
-    <a href="{% url 'user_data' %}">← Anuluj i wróć do widoku danych</a>
-</body>
-</html>
+          </fieldset>
+
+          <div style="margin-top:16px; display:flex; gap:10px;">
+            <button type="submit" class="btn btn--primary">💾 Zapisz</button>
+            <a href="{% url 'user_data' %}" class="btn btn--ghost">Anuluj</a>
+          </div>
+        </form>
+      </div>
+    </main>
+  </div>
+{% endblock %}
+

@@ -1,37 +1,64 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Lista sprzętu</title>
-</head>
-<body>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Sprzęt dostępny{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna = lista sprzętu -->
+    <main>
     <h1>Sprzęt dostępny w wypożyczalni</h1>
 
-    <table border="1">
-        <tr>
+    <div class="table-wrapper" style="overflow-x:auto;">
+      <table class="table">
+        <thead>
+          <tr>
             <th>Nazwa</th>
             <th>Kategoria</th>
             <th>Opis</th>
             <th>Ilość</th>
             <th>Cena za dobę</th>
             <th>Kaucja</th>
-        </tr>
-
-        {% for item in equipment %}
-        <tr>
-            <td>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in equipment %}
+            <tr>
+              <td>
                 <a href="{% url 'equipment_detail' item.pk %}">
-                    {{ item.name }}
+                  {{ item.name }}
                 </a>
-            </td>
-            <td>{{ item.category.name }}</td>
-            <td>{{ item.description }}</td>
-            <td>{{ item.total_quantity }}</td>
-            <td>{{ item.price_per_day }} zł</td>
-            <td>{{ item.deposit }} zł</td>
-        </tr>
-        {% endfor %}
-    </table>
-    <br>
-    <a href="{% url 'user_panel' %}">← Powrót do panelu użytkownika</a>
-</body>
-</html>
+              </td>
+              <td>{{ item.category.name }}</td>
+              <td>{{ item.description }}</td>
+              <td>{{ item.total_quantity }}</td>
+              <td>{{ item.price_per_day }} zł</td>
+              <td>{{ item.deposit }} zł</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" style="text-align:center; padding:20px;">
+                Brak dostępnego sprzętu
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </main>
+</div>
+{% endblock %}

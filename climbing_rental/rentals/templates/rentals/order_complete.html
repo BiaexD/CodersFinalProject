@@ -1,18 +1,42 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Zamowienie zrealizowane</title>
-</head>
-<body>
-  {% if messages %}
-    <ul>
-      {% for message in messages %}
-        <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
-      {% endfor %}
-    </ul>
-  {% endif %}
+{% extends 'base.html' %}
+{% load static %}
 
-  <a href="{% url 'home' %}">← Powrót do strony głównej</a>
-</body>
-</html>
+{% block title %}Zamówienie zrealizowane{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+    
+    <!-- Lewa kolumna: panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna: potwierdzenie zamówienia -->
+    <main>
+      <div class="card" style="padding:30px; text-align:center;">
+        <h1 style="color:green; margin-bottom:20px;">✅ Zamówienie zostało złożone!</h1>
+
+        <p>Dziękujemy za skorzystanie z naszej wypożyczalni. Twoje zamówienie zostało zapisane w systemie.</p>
+
+        {% if rental %}
+          <p><strong>Numer zamówienia:</strong> #{{ rental.id }}</p>
+          <p><strong>Okres wypożyczenia:</strong> {{ rental.start_date }} – {{ rental.end_date }}</p>
+        {% endif %}
+
+        <p>Pełne szczegóły znajdziesz w zakładce <a href="{% url 'user_rentals' %}">Historia wypożyczeń</a>.</p>
+
+        <div style="margin-top:20px;">
+          <a href="{% url 'home' %}" class="btn btn--primary">← Powrót do strony głównej</a>
+        </div>
+      </div>
+    </main>
+  </div>
+{% endblock %}

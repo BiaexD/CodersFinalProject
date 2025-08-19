@@ -42,6 +42,9 @@ class Rental(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.start_date} - {self.end_date}"
 
+    def get_days_count(self):
+        return (self.end_date - self.start_date).days
+
 
 
 class RentalItem(models.Model):

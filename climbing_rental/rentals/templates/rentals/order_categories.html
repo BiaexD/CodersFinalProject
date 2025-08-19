@@ -1,20 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Title</title>
-</head>
-<body>
-    {% include "rentals/_rental_period_bar.html" %}
-    <h1>Wybierz kategorie</h1>
-    <a href="{% url 'cart' %}">Koszyk ({{ cart_count }})</a>
-        <ul>
-          {% for category in categories %}
-            <li>
-              <a href="{% url 'category_detail' category.id %}">{{ category.name }}</a>
-            </li>
-          {% endfor %}
-        </ul>
-    <p><a href="{% url 'user_panel' %}">← Powrót do panelu</a></p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Wybór kategorii{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna -->
+    <main>
+      <!-- Pasek z datami -->
+      {% include "rentals/_rental_period_bar.html" %}
+
+      <!-- Pasek z kategoriami + koszyk -->
+      {% include "partials/_categorybar.html" %}
+
+      <!-- Treść pod spodem -->
+      <div class="card" style="padding:20px; margin-top:12px;">
+        <h2>Wybierz kategorię sprzętu</h2>
+        <p>Kliknij kategorię powyżej, aby zobaczyć dostępny sprzęt.</p>
+      </div>
+    </main>
+  </div>
+{% endblock %}
+

@@ -1,14 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Logowanie</title>
-</head>
-<body>
-    <h1>Zaloguj się</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Zaloguj</button>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Logowanie{% endblock %}
+{% block nav_start %}active{% endblock %}
+
+{% block content %}
+  <div class="section" style="max-width:520px; margin:auto;">
+    <h2>Zaloguj się</h2>
+
+    <form method="post" class="card">
+      {% csrf_token %}
+
+      {{ form.non_field_errors }}
+
+      <div class="form-group" style="display:grid; gap:8px; margin-top:12px;">
+        <label class="label" for="{{ form.username.id_for_label }}">Nazwa użytkownika</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="help">{{ form.username.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="display:grid; gap:8px; margin-top:12px;">
+        <label class="label" for="{{ form.password.id_for_label }}">Hasło</label>
+        {{ form.password }}
+        {% if form.password.errors %}
+          <div class="help">{{ form.password.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
+        <button type="submit" class="btn btn--brand">Zaloguj</button>
+        <a class="btn btn--ghost" href="{% url 'register' %}">Zarejestruj się</a>
+      </div>
     </form>
-</body>
-</html>
+  </div>
+{% endblock %}

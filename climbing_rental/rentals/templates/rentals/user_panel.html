@@ -1,18 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Panel uzytkownika</title>
-</head>
-<body>
-    <p><a href="{% url 'user_rentals' %}">Historia wypozyczen</a></p>
-    <p><a href="{% url 'user_data' %}">Moje dane</a></p>
-    <p><a href="{% url 'select_dates' %}">Wypozycz sprzet</a></p>
-    <p><a href="{% url 'equipment_list' %}">Podglad sprzetu</a></p>
-    <p>
-        {% for message in messages %}
-          <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
-        {% endfor %}
-    </p>
-    <p><a href="{% url 'home' %}">← Powrót do strony głównej</a></p>
-</body>
-</html>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Panel użytkownika{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa część = główna zawartość -->
+    <main>
+      <h2>Witaj, {{ user.username }}!</h2>
+      <p>W tym miejscu w przyszłości możemy pokazać np. podsumowanie Twoich ostatnich działań.</p>
+    </main>
+
+  </div>
+{% endblock %}

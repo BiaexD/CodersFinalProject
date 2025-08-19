@@ -1,30 +1,53 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Wybierz termin wypożyczenia</title>
-</head>
-<body>
-    <h1>Wybierz termin wypożyczenia</h1>
-    <form method="post">
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Wybierz daty wypożyczenia{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna = formularz wyboru dat -->
+    <main>
+      <h1>Wybierz daty wypożyczenia</h1>
+      <p>Podaj termin, w którym chcesz wypożyczyć sprzęt. Na tej podstawie system sprawdzi dostępność.</p>
+
+      <!-- Formularz -->
+      <form method="post" class="card" style="padding:20px; margin-top:12px; display:flex; flex-direction:column; gap:12px; max-width:400px;">
         {% csrf_token %}
-        <label for="start_date">Data początkowa:</label>
-        <input type="date" name="start_date" id="start_date" required min="{{ today }}">
-        <br>
-        <label for="end_date">Data końcowa:</label>
-        <input type="date" name="end_date" id="end_date" required min="{{ today }}">
-        <br><br>
 
-        {% if messages %}
-          <ul>
-            {% for message in messages %}
-              <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
-            {% endfor %}
-          </ul>
-        {% endif %}
+        <label for="start_date">Data rozpoczęcia</label>
+        <input type="date" id="start_date" name="start_date" required min="{{ today }}">
 
-        <button type="submit">Zatwierdź</button>
-    </form>
-    <br>
-    <a href="{% url 'user_panel' %}">← Powrót do panelu użytkownika</a>
-</body>
-</html>
+        <label for="end_date">Data zakończenia</label>
+        <input type="date" id="end_date" name="end_date" required min="{{ today }}">
+
+        <button type="submit" class="btn btn--primary">Zatwierdź</button>
+      </form>
+
+      <!-- Komunikaty Django -->
+      {% if messages %}
+        <ul style="margin-top:20px;">
+          {% for message in messages %}
+            <li class="{{ message.tags }}" style="color:red; font-weight:bold;">
+              {{ message }}
+            </li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    </main>
+  </div>
+{% endblock %}
+

@@ -1,0 +1,44 @@
+{% load static %}
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{% block title %}Aplikacja{% endblock %}</title>
+
+  <!-- Czcionki (nagłówki/menu)-->
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Oswald:wght@500;600&display=swap" rel="stylesheet">
+
+  <!-- Nasze style -->
+  <link href="{% static 'css/base.css' %}" rel="stylesheet">
+  <link href="{% static 'css/navbar.css' %}" rel="stylesheet">
+        {% if messages %}
+          <div style="max-width:1200px; margin:20px auto;">
+            {% for message in messages %}
+              <p class="{{ message.tags }}" style="color:red; font-weight:bold;">
+                {{ message }}
+              </p>
+            {% endfor %}
+          </div>
+        {% endif %}
+  <link href="{% static 'css/components.css' %}" rel="stylesheet">
+
+  {% block head %}{% endblock %}
+</head>
+<body class="kw-body">
+  {% include 'partials/_navbar.html' %}
+
+
+  <main id="content" class="kw-container">
+    {% include 'partials/_messages.html' %}
+    {% block content %}{% endblock %}
+  </main>
+
+  {% include 'partials/_footer.html' %}
+
+  <!-- Skrypty -->
+  <script src="{% static 'js/navbar.js' %}"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

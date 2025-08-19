@@ -1,0 +1,20 @@
+<div class="card" style="display:flex; align-items:center; justify-content:space-between; padding:10px 20px; margin:12px 0; flex-wrap:wrap; gap:10px;">
+
+  <!-- Lewa część = przyciski kategorii -->
+  <div style="display:flex; gap:10px; flex-wrap:wrap;">
+    {% for category in categories %}
+      <a
+        href="{% url 'category_detail' category.id %}"
+        class="btn {% if active_category and active_category.id == category.id %}btn--primary{% else %}btn--ghost{% endif %}">
+        {{ category.name }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Prawa część = koszyk -->
+  <div>
+    <a href="{% url 'cart' %}" class="btn btn--primary">
+      🛒 Koszyk ({{ cart_count }})
+    </a>
+  </div>
+</div>

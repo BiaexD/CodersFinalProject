@@ -1,33 +1,60 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Podsumowanie zamówienia</title>
-</head>
-<body>
-    <h1>Potwierdź zamówienie</h1>
+{% extends 'base.html' %}
+{% load static %}
 
-    <form method="post">
+{% block title %}Podsumowanie zamówienia{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa część = podsumowanie zamówienia -->
+    <main>
+      <h1>Potwierdź zamówienie</h1>
+
+      <form method="post">
         {% csrf_token %}
-        {% if messages %}
+
+        <div class="card" style="padding:20px; margin-top:12px;">
+          <h3>Sprzęt do wypożyczenia:</h3>
           <ul>
-            {% for message in messages %}
-              <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
+            {% for item in items %}
+              <li>
+                {{ item.equipment.name }} – ilość: {{ item.quantity }}
+              </li>
             {% endfor %}
           </ul>
-        {% endif %}
 
-        <h3>Sprzęt do wypożyczenia:</h3>
-        <ul>
-            {% for item in items %}
-                <li>
-                    {{ item.equipment.name }} – ilość: {{ item.quantity }}
-                </li>
-            {% endfor %}
-        </ul>
+          <hr style="margin:15px 0;">
 
-        <button type="submit">Zamawiam</button>
-    </form>
+          <p><strong>Termin zamówienia:</strong> {{ cart.start_date }} – {{ cart.end_date }}</p>
+          <p><strong>Ilość dni:</strong> {{ rental_days }}</p>
+          <p><strong>Koszt za cały okres:</strong> {{ total_rental_price }} zł</p>
+          <p><strong>Razem kaucji:</strong> {{ total_deposit }} zł</p>
 
-    <p><a href="{% url 'cart' %}">← Powrót do koszyka</a></p>
-</body>
-</html>
+          <hr style="margin:15px 0;">
+
+          <p style="font-size:18px; font-weight:bold;">
+            ✅ Całkowity koszt zamówienia: {{ total_cost }} zł
+          </p>
+        </div>
+
+        <div style="margin-top:16px; display:flex; gap:10px;">
+          <button type="submit" class="btn btn--primary">Zamawiam</button>
+          <a href="{% url 'cart' %}" class="btn btn--ghost">← Powrót do koszyka</a>
+        </div>
+      </form>
+    </main>
+  </div>
+{% endblock %}

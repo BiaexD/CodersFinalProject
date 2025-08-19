@@ -1,36 +1,64 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>{{ category.name }}</title>
-</head>
-<body>
-    {% include "rentals/_rental_period_bar.html" %}
-    <h1>Sprzęt w kategorii: {{ category.name }}</h1>
-    <a href="{% url 'cart' %}">Koszyk ({{ cart_count }})</a>
-    <ul>
-        {% for item in equipment_list %}
-            <li>
-                <strong>{{ item.equipment.name }}</strong>
-                – {{ item.equipment.price_per_day }} zł/doba, kaucja: {{ item.equipment.deposit }} zł
-                        <form action="{% url 'add_to_cart' item.equipment.pk %}" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">Dodaj do koszyka</button>
-                        </form>
-                (dostepne: {{ item.available }})
-            </li>
-        {% empty %}
-            <li>Brak sprzętu w tej kategorii.</li>
-        {% endfor %}
-    </ul>
-                        {% if messages %}
-                      <ul>
-                        {% for message in messages %}
-                          <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
-                        {% endfor %}
-                      </ul>
-                    {% endif %}
+{% extends 'base.html' %}
+{% load static %}
 
-    <a href="{% url 'order_categories' %}">← Powrót do kategorii</a>
-</body>
-</html>
+{% block title %}Sprzęt – {{ category.name }}{% endblock %}
+
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+    
+    <!-- Lewa kolumna: panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
+        </form>
+      </nav>
+    </aside>
+
+    <!-- Prawa kolumna: szczegóły kategorii -->
+    <main>
+      {% include "rentals/_rental_period_bar.html" %}
+      {% include "partials/_categorybar.html" with active_category=category %}
+
+      <div class="card" style="padding:20px; margin-top:12px;">
+        <h2>Sprzęt w kategorii: {{ category.name }}</h2>
+
+        {% if equipment_list %}
+          <table style="width:100%; border-collapse:collapse; margin-top:10px;">
+            <thead>
+              <tr>
+                <th style="text-align:left;">Nazwa</th>
+                <th>Cena/doba</th>
+                <th>Kaucja</th>
+                <th>Dostępne</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in equipment_list %}
+                <tr>
+                  <td>{{ item.equipment.name }}</td>
+                  <td>{{ item.equipment.price_per_day }} zł</td>
+                  <td>{{ item.equipment.deposit }} zł</td>
+                  <td>{{ item.available }}</td>
+                  <td>
+                    <form action="{% url 'add_to_cart' item.equipment.pk %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn--primary">Dodaj do koszyka</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p>Brak sprzętu w tej kategorii.</p>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+{% endblock %}

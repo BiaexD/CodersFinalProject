@@ -1,15 +1,46 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Rejestracja</title>
-</head>
-<body>
-    <h1>Załóż konto</h1>
-    <form method="post">
-        {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Zarejestruj się</button>
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Rejestracja{% endblock %}
+{% block nav_start %}active{% endblock %}
+
+{% block content %}
+  <div class="section" style="max-width:500px; margin:auto;">
+    <h2>Załóż konto</h2>
+
+    <form method="post" class="card">
+      {% csrf_token %}
+
+      {{ form.non_field_errors }}
+
+      <div class="form-group"  style="display:grid">
+        <label class="label" for="{{ form.username.id_for_label }}">Nazwa użytkownika</label>
+        {{ form.username }}
+        {% if form.username.errors %}
+          <div class="help">{{ form.username.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="display:grid">
+        <label class="label" for="{{ form.password1.id_for_label }}">Hasło</label>
+        {{ form.password1 }}
+        {% if form.password1.errors %}
+          <div class="help">{{ form.password1.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div class="form-group" style="display:grid">
+        <label class="label" for="{{ form.password2.id_for_label }}">Powtórz hasło</label>
+        {{ form.password2 }}
+        {% if form.password2.errors %}
+          <div class="help">{{ form.password2.errors|striptags }}</div>
+        {% endif %}
+      </div>
+
+      <div style="margin-top:16px; display:flex; gap:10px; align-items:center;">
+        <button type="submit" class="btn btn--brand">Zarejestruj</button>
+        <a class="btn btn--ghost" href="{% url 'login' %}">Mam już konto</a>
+      </div>
     </form>
-    <p>Masz już konto? <a href="{% url 'login' %}">Zaloguj się</a></p>
-</body>
-</html>
+  </div>
+{% endblock %}

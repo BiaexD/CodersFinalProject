@@ -39,10 +39,14 @@ def home(request):
 
 def category_detail(request, category_id):
     category = get_object_or_404(Category, pk=category_id)
+    categories = Category.objects.all()
+
     cart = get_active_cart(request.user)
     if not cart:
         messages.error(request, "Najpierw wybierz daty wypozyczenia sprzetu!")
         return redirect('select_dates')
+
+    cart_count = cart.cartitem_set.count()
 
     available_equipment = []
     for equipment in Equipment.objects.filter(category=category):
@@ -54,8 +58,11 @@ def category_detail(request, category_id):
             })
     context = {
         'category': category,
+        'categories': categories,
         'equipment_list': available_equipment,
         'cart': cart,
+        'cart_count': cart_count,
+        'active_cart': category,
     }
 
     return render(request, 'rentals/category_detail.html', context)
@@ -227,6 +234,12 @@ def order_summary(request):
 
     items = CartItem.objects.filter(cart=cart)
 
+    total_price_per_day = sum(item.equipment.price_per_day * item.quantity for item in items)
+    total_deposit = sum(item.equipment.deposit * item.quantity for item in items)
+    rental_days = (cart.end_date - cart.start_date).days
+    total_rental_price = total_price_per_day * rental_days
+    total_cost = total_rental_price + total_deposit
+
     if request.method == 'POST':
         with transaction.atomic():
             for item in items:
@@ -281,7 +294,15 @@ def order_summary(request):
             messages.success(request, "Zamowienie zostalo wyslane do realizacji!")
             return redirect('order_complete')
 
-    return render(request, 'rentals/order_summary.html', {'cart': cart, 'items': items})
+    return render(request, 'rentals/order_summary.html', {
+        'cart': cart,
+        'items': items,
+        'total_price_per_day': total_price_per_day,
+        'total_rental_price': total_rental_price,
+        'total_deposit': total_deposit,
+        'rental_days': rental_days,
+        'total_cost': total_cost,
+    })
 
 
 @login_required
@@ -383,11 +404,24 @@ def finish_rental(request, rental_id):
 @login_required
 def rental_detail(request, rental_id):
     rental = get_object_or_404(Rental, pk=rental_id, user=request.user)
-    items = rental.items.all()
+    items = rental.items.select_related("equipment").all()
+
+    total_price_per_day = Decimal("0.00")
+    total_deposit = Decimal("0.00")
+
+    for item in items:
+        total_price_per_day += item.equipment.price_per_day * item.quantity
+        total_deposit += item.equipment.deposit * item.quantity
+
+    total_price_total = total_price_per_day * rental.get_days_count()
 
     context = {
-        'rental': rental,
-        'items': items,
+        "rental": rental,
+        "items": items,
+        "days_count": rental.get_days_count(),
+        "total_price_per_day": total_price_per_day,
+        "total_price_total": total_price_total,
+        "total_deposit": total_deposit,
     }
     return render(request, 'rentals/rental_detail.html', context)
 

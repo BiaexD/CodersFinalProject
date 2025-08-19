@@ -1,0 +1,12 @@
+.alert{padding:12px 14px;border-radius:8px;border:1px solid var(--border);background:#fff}
+.alert--success{background:#ecfdf5;border-color:#10b98155}
+.alert--error{background:#fef2f2;border-color:#ef444455}
+
+/* pasek z dużym zdjęciem i nagłówkiem */
+.hero{
+  background-image:var(--hero-img);
+  background-size:cover;background-position:center;
+  min-height:260px;display:flex;align-items:center
+}
+.hero__inner{max-width:1200px;margin:0 auto;padding:40px 18px}
+.hero h1{color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.45);font-size:44px;line-height:1.1}

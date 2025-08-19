@@ -1,63 +1,81 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Koszyk</title>
-</head>
-<body>
-    {% include "rentals/_rental_period_bar.html" %}
-    <h1>Twój koszyk</h1>
-    {% if messages %}
-      <ul>
-        {% for message in messages %}
-          <li class="{{ message.tags }}" style="color: red; font-weight: bold">{{ message }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
-    {% if items %}
-        <table border="1">
-            <tr>
-                <th>Nazwa</th>
-                <th>Ilość</th>
-                <th>Cena za dzień</th>
-                <th>Kaucja</th>
-            </tr>
-            {% for item in items %}
-                <tr>
-                    <td>{{ item.equipment.name }}</td>
-                    <td>
-                        <form action="{% url 'decrease_quantity' item.equipment.id %}" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">−</button>
-                        </form>
+{% extends 'base.html' %}
+{% load static %}
 
-                        {{ item.quantity }}
+{% block title %}Twój koszyk{% endblock %}
 
-                        <form action="{% url 'increase_quantity' item.equipment.id %}" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">+</button>
-                        </form>
-                    </td>
-                    <td>{{ item.price }} zł</td>
-                    <td>{{ item.deposit }} zł</td>
-                    <td>
-                        <form action="{% url 'remove_from_cart' item.equipment.id %}" method="post" style="display:inline;">
-                            {% csrf_token %}
-                            <button type="submit">🗑️ Usuń</button>
-                        </form>
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-        <p><strong>Razem do zapłaty za dzień:</strong> {{ total_price_per_day }} zł</p>
-        <p><strong>Razem kaucji:</strong> {{ total_deposit }} zł</p>
-
-        <form action="{% url 'order_summary' %}" method="get">
-            <button type="submit">Przejdź do zamówienia</button>
+{% block content %}
+  <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
+    
+    <!-- Lewa kolumna = panel użytkownika -->
+    <aside class="card" style="padding:20px;">
+      <h3>Moje konto</h3>
+      <nav style="display:flex; flex-direction:column; margin-top:10px;">
+        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
+        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
+        <form action="{% url 'logout' %}" method="post">
+          {% csrf_token %}
+          <button type="submit" class="btn btn--error">Wyloguj</button>
         </form>
-    {% else %}
-        <p>Koszyk jest pusty.</p>
-    {% endif %}
+      </nav>
+    </aside>
 
-    <p><a href="{% url 'order_categories' %}">← Powrót do kategorii</a></p>
-</body>
-</html>
+    <!-- Prawa kolumna = koszyk -->
+    <main>
+      {% include "rentals/_rental_period_bar.html" %}
+
+      <h1>Twój koszyk</h1>
+
+      {% if items %}
+        <div class="card" style="padding:20px; margin-top:12px;">
+          <table style="width:100%; border-collapse:collapse;">
+            <thead>
+              <tr style="border-bottom:1px solid #ddd; text-align:left;">
+                <th style="padding:8px;">Nazwa</th>
+                <th style="padding:8px;">Ilość</th>
+                <th style="padding:8px;">Cena / dzień</th>
+                <th style="padding:8px;">Kaucja</th>
+                <th style="padding:8px;"></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for item in items %}
+                <tr style="border-bottom:1px solid #eee;">
+                  <td style="padding:8px;">{{ item.equipment.name }}</td>
+                  <td style="padding:8px;">
+                    <form action="{% url 'decrease_quantity' item.equipment.id %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn--ghost">−</button>
+                    </form>
+
+                    {{ item.quantity }}
+
+                    <form action="{% url 'increase_quantity' item.equipment.id %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn--ghost">+</button>
+                    </form>
+                  </td>
+                  <td style="padding:8px;">{{ item.price }} zł</td>
+                  <td style="padding:8px;">{{ item.deposit }} zł</td>
+                  <td style="padding:8px;">
+                    <form action="{% url 'remove_from_cart' item.equipment.id %}" method="post" style="display:inline;">
+                      {% csrf_token %}
+                      <button type="submit" class="btn btn--error">Usuń</button>
+                    </form>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+
+          <div style="margin-top:16px; display:flex; gap:10px;">
+            <a href="{% url 'order_summary' %}" class="btn btn--brand">Finalizuj zamówienie</a>
+            <a href="{% url 'order_categories' %}" class="btn btn--ghost">← Powrót do kategorii</a>
+          </div>
+        </div>
+      {% else %}
+        <p>Koszyk jest pusty.</p>
+        <a href="{% url 'order_categories' %}" class="btn btn--ghost">← Powrót do kategorii</a>
+      {% endif %}
+    </main>
+  </div>
+{% endblock %}
