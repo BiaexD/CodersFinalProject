@@ -7,17 +7,7 @@
   <div style="display:grid; grid-template-columns: 220px 1fr; gap:20px; max-width:1200px; margin:auto;">
     
     <!-- Lewa kolumna: panel użytkownika -->
-    <aside class="card" style="padding:20px;">
-      <h3>Moje konto</h3>
-      <nav style="display:flex; flex-direction:column; margin-top:10px;">
-        <a href="{% url 'user_data' %}" class="btn btn--ghost">Moje dane</a>
-        <a href="{% url 'user_rentals' %}" class="btn btn--ghost">Historia wypożyczeń</a>
-        <form action="{% url 'logout' %}" method="post">
-          {% csrf_token %}
-          <button type="submit" class="btn btn--error">Wyloguj</button>
-        </form>
-      </nav>
-    </aside>
+    {% include "partials/_leftbar.html" %}
 
     <!-- Prawa kolumna: szczegóły kategorii -->
     <main>

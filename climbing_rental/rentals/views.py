@@ -397,7 +397,7 @@ def finish_rental(request, rental_id):
     else:
         messages.info(request, "To wypozyczenie zostalo juz zakonczone")
 
-    return redirect('user_panel')
+    return redirect('user_rentals')
 
 
 

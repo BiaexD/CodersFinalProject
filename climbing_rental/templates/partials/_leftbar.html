@@ -1,0 +1,33 @@
+{% if user.is_authenticated %}
+
+  <aside class="card" style="padding:20px;">
+    <h3>Moje konto</h3>
+    <nav style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+      <a href="{% url 'user_data' %}"
+         class="btn btn--ghost {% if left_active == 'user_data' %}btn--active{% endif %}">
+        Moje dane
+      </a>
+      <a href="{% url 'user_rentals' %}"
+         class="btn btn--ghost {% if left_active == 'user_rentals' %}btn--active{% endif %}">
+        Historia wypożyczeń
+      </a>
+
+      <form action="{% url 'logout' %}" method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn--error">Wyloguj</button>
+      </form>
+    </nav>
+  </aside>
+
+{% else %}
+
+  <aside class="card" style="padding:20px;">
+    <h3>Witaj!</h3>
+    <p>Zaloguj się, aby korzystać z wypożyczalni.</p>
+    <div style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+      <a href="{% url 'login' %}" class="btn btn--brand">Zaloguj</a>
+      <a href="{% url 'register' %}" class="btn btn--ghost">Zarejestruj się</a>
+    </div>
+  </aside>
+
+{% endif %}
